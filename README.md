@@ -1,6 +1,8 @@
 # packetgen
-``` abilene5 == (IBM14) == abilene8-ovs == abilene7 ```  
-```                     |---- nm10g -----| ```  
+memo 
+
+``` abilene5 == (IBM14) == abilene8-ovs == abilene7 ```  
+```                     |---- nm10g ----| ```  
 
 ___
 ## packetgen UDP 
