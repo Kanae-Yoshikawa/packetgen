@@ -17,7 +17,7 @@ int main()
   char recv_buf[100];
   int count;
 
-  if ((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
+  if ((s = socket(PF_INET, SOCK_RAW, 0)) < 0) {
     perror("socket");
     exit(1);
   }
@@ -26,6 +26,7 @@ int main()
   myskt.sin_family = AF_INET;
   myskt.sin_port = htons(myport);
   myskt.sin_addr.s_addr = htonl(INADDR_ANY);
+
 
   if (bind(s, (struct sockaddr *)&myskt, sizeof myskt) < 0) {
     perror("bind");
