@@ -14,7 +14,9 @@ main(int argc, char *argv[])
     int sock;
     char buf[32];
     char *deststr;
-    unsigned int **addrptr;
+    unsigned int **addrptr;     /* ?? */
+
+
 
     if (argc != 2) {
         printf("Usage : %s dest\n", argv[0]);
