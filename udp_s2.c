@@ -17,7 +17,7 @@ int main()
   char recv_buf[100];
   int count;
 
-  if ((s = socket(PF_INET, SOCK_RAW, 0)) < 0) {
+  if ((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
     perror("socket");
     exit(1);
   }
