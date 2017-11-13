@@ -1,16 +1,6 @@
-/*
- *
- *Software-based Ethernet Common Header
- *
- * Coded by Yasusi Kanada
- * Ver 1.0  2012-5-20   Initial version
- *
- ***/
-
-
 
 #include <linux/if_packet.h>
-#include <linux/if_ether.h> 
+#include <linux/if_ether.h>         //指定できるプロトコルリスト
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -33,9 +23,11 @@ struct _EtherHeader {
     uint32_t destMAC2;
     uint16_t srcMAC1;
     uint32_t srcMAC2;
-//#ifdef VLAN
+
+    //#ifdef VLAN
     uint32_t VLANTag;
-//#endif
+
+    //#endif
     uint16_t type;
     int32_t  payload;
 } __attribute__((packed));
