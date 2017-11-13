@@ -1,9 +1,9 @@
 /*  
-// [cpuid命令でCPU情報を取得]
-// http://linux-biyori.sakura.ne.jp/program/pr_cpuid.php
-// インラインアセンブラを使用してcpuid命令を実行し
-// 各レジスタに情報が設定されていることを確認する．
-// cpuid命令の詳しい資料についてはintelのデータシートを参照せよ
+* [cpuid命令でCPU情報を取得]
+* http://linux-biyori.sakura.ne.jp/program/pr_cpuid.php
+* インラインアセンブラを使用してcpuid命令を実行し
+* 各レジスタに情報が設定されていることを確認する．
+* cpuid命令の詳しい資料についてはintelのデータシートを参照せよ
  */
 
 

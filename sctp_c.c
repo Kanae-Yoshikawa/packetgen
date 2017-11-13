@@ -1,6 +1,7 @@
 /*
  *  sctpclnt.c
  *
+ *  https://www.ibm.com/developerworks/jp/linux/library/l-sctp/index.html
  *  SCTP multi-stream client.
  *
  *  M. Tim Jones <mtj@mtjones.com>

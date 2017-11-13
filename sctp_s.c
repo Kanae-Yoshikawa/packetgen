@@ -1,6 +1,7 @@
 /*
  *  sctpsrvr.c
  *
+ * https://www.ibm.com/developerworks/jp/linux/library/l-sctp/index.html
  *  SCTP multi-stream server.
  *
  *  M. Tim Jones <mtj@mtjones.com>
