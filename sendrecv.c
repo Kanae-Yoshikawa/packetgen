@@ -24,18 +24,19 @@
 #define InitialReplyDelay   40      // これ何???
 #define MaxCommCount        9999    // これ何???
 //#define IFNAME  "ethX"        // or "gretapX"
-#define IFNAME  "emX"           // abileneのinterface名に変更した
+#define IFNAME  "p5p1"           // abileneのinterface名に変更した
 extern void _exit(int32_t);     //プロトタイプ宣言．外部関数参照
 
 
 /***
  * MAC addressを指定. MAC1とMAC2で前後を分離
+ * MAC addrは16進数．「0x」付け忘れ注意
  * {src, dst, x, y}で借り置きした
  * 例）srcのMAC address -> MAC1[0]とMAC2[0]を直結したもの
  ***/
 #define NTerminals  4           // 指定するMAC address数
-uint16_t MAC1[NTerminals] = {0060, 0060, 0x0200, 0x0200};
-uint32_t MAC2[NTerminals] = {dd440bcb, dd440c2f, 0x00000003, 0x00000004};
+uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0200, 0x0200};
+uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c2f, 0x00000003, 0x00000004};
 
 
 
@@ -234,10 +235,10 @@ void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
  * Main program
  */
 int32_t main(int32_t argc, char **argv) {
-    int32_t ifindex;        //
+    int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
     int32_t myTermNum = 0;      //MAC1{}の何要素目か
     int32_t destTermNum = 1;    //MAC2{}の何要素目か
-    int32_t ifnum = 3;      // ???
+    int32_t ifnum = 5;      // 物理port番号　c.f  IFNAME
     uint16_t vlanID = 55;   //vlanIDを指定
     int32_t i;
 
@@ -277,7 +278,7 @@ int32_t main(int32_t argc, char **argv) {
     uint32_t SrcMAC2  = MAC2[myTermNum];
     uint16_t DestMAC1 = MAC1[destTermNum];
     uint32_t DestMAC2 = MAC2[destTermNum];
-    printf("em%d terminal#=%d VLAN:%d srcMAC:%08x%04x destMAC:%08x%04x\n",
+    printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%08x%04x destMAC:%08x%04x\n",
             ifnum, myTermNum, vlanID,
             (int32_t)SrcMAC1, (int32_t)SrcMAC2, (int32_t)DestMAC1, (int32_t)DestMAC2);
 
