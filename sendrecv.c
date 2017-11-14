@@ -30,12 +30,12 @@ extern void _exit(int32_t);     //プロトタイプ宣言．外部関数参照
 
 /***
  * MAC addressを指定. MAC1とMAC2で前後を分離
- * 例）マシン1のMAC address -> MAC1[0]とMAC2[0]を直結したもの
  * {src, dst, x, y}で借り置きした
+ * 例）srcのMAC address -> MAC1[0]とMAC2[0]を直結したもの
  ***/
 #define NTerminals  4           // 指定するMAC address数
-uint16_t MAC1[NTerminals] = {0x0211, 0x0222, 0x0200, 0x0200};
-uint32_t MAC2[NTerminals] = {0x00000011, 0x00000022, 0x00000003, 0x00000004};
+uint16_t MAC1[NTerminals] = {0060, 0060, 0x0200, 0x0200};
+uint32_t MAC2[NTerminals] = {dd440bcb, dd440c2f, 0x00000003, 0x00000004};
 
 
 
@@ -173,8 +173,8 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
 
             ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
                     SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
-            //ここから下のif 文まで含めてwhile
 
+            //ここから下のif 文まで含めてwhile
             ssize_t sizeout = sendto(fd, packet, packetSize, 0,
                     (struct sockaddr *)&sll, sizeof(sll));
 
@@ -187,8 +187,8 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
                             (int32_t)sizeout, (int32_t)ifindex);
                 }
             }
+            //ここまで
             }
-//ここまで
 
 void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint16_t vlanID) {
@@ -267,8 +267,8 @@ int32_t main(int32_t argc, char **argv) {
         vlanID = atoi(argv[count]);       // VLAN ID
     }
     if (vlanID < 1 || 4095 < vlanID) {
-        printf("%"PRIu16"\n", vlanID);  // 書き足した．header fileもincludeに足した
-        //printf("VLAN ID out of range (1..4095)\n", vlanID);  //before
+        //printf("VLAN ID out of range (1..4095)\n", vlanID);       //before
+        printf("%"PRIu16"\n", vlanID);     // 書き足した．header fileもincludeに足した
         vlanID = 1;
     }
 
