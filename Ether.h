@@ -29,7 +29,7 @@ struct _EtherHeader {
 
     //#endif
     uint16_t type;
-    int32_t  payload;
+   // int32_t  payload;
 } __attribute__((packed));
 
 typedef struct _EtherHeader EtherPacket;

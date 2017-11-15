@@ -52,8 +52,8 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
     struct ifreq ifr;
     struct sockaddr_ll sll;
     unsigned char ifname[IFNAMSIZ];
-    strncpy(ifname, IFNAME, IFNAMSIZ);
-    ifname[strlen(ifname) - 1] = '0' + index;
+    strncpy(ifname, "p5p1", sizeof("p5p1"));
+    //ifname[strlen(ifname) - 1] = '0' + index;
 
     //RAW socket生成
     int32_t fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -144,10 +144,10 @@ int32_t lastPayload = -1;
  */
 void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
 #ifdef VLAN
-    printf("%s #%d (VLAN %d) from %08x%04x to %08x%04x\n",
+    printf("%s #%d (VLAN %d) from %04x%04x to %04x%04x\n",
             message, ntohl(packet->payload), ntohl(packet->VLANTag) & 0xFFF,
 #else
-            printf("%s #%d from %08x%04x to %08x%04x\n",
+            printf("%s #%d from %04x%04x to %04x%04x\n",
                 message, ntohl(packet->payload),
 #endif
                 ntohs(packet->srcMAC1), ntohl(packet->srcMAC2),
@@ -239,7 +239,7 @@ int32_t main(int32_t argc, char **argv) {
     int32_t myTermNum = 0;      //MAC1{}の何要素目か
     int32_t destTermNum = 1;    //MAC2{}の何要素目か
     int32_t ifnum = 5;      // 物理port番号　c.f  IFNAME
-    uint16_t vlanID = 55;   //vlanIDを指定
+    uint16_t vlanID = 173;   //vlanIDを指定
     int32_t i;
 
     // Get terminal and interface numbers from the command line:
@@ -278,7 +278,9 @@ int32_t main(int32_t argc, char **argv) {
     uint32_t SrcMAC2  = MAC2[myTermNum];
     uint16_t DestMAC1 = MAC1[destTermNum];
     uint32_t DestMAC2 = MAC2[destTermNum];
-    printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%08x%04x destMAC:%08x%04x\n",
+    //MAC addr->printfする時にキャストしている  uintからint↲
+    // 変数指定子 %x ->小文字16進数表示．04-> 0フラグ↲
+    printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%04x%04x destMAC:%04x%04x\n",
             ifnum, myTermNum, vlanID,
             (int32_t)SrcMAC1, (int32_t)SrcMAC2, (int32_t)DestMAC1, (int32_t)DestMAC2);
 
