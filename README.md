@@ -2,12 +2,19 @@
 memo 
 
 ___
-## packetgen UDP 
-
-
+## UDP 
+udp_s.c  
+udp_c.c
 ___
-## packetgen TCP 
-
-
+## TCP 
+tcp_s.c  
+tcp_c.c
 ___
-## packetgen SCTP
+## SCTP
+sctp_s.c  
+sctp_c.c
+___
+Ether.h & sendrecv.c  
+sendRawEth.c  
+cpuid.c  
+
