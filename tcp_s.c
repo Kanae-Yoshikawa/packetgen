@@ -1,6 +1,6 @@
 
 //
-/* 関数とheader file の対応メモしておけ */
+/* 関数とheader file の対応メモする */
 //
 
 #include <stdio.h>
