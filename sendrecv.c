@@ -279,7 +279,7 @@ int32_t main(int32_t argc, char **argv) {
     uint16_t DestMAC1 = MAC1[destTermNum];
     uint32_t DestMAC2 = MAC2[destTermNum];
     //MAC addr->printfする時にキャストしている  uintからint↲
-    // 変数指定子 %x ->小文字16進数表示．04-> 0フラグ↲
+    // 変換指定子 %x ->小文字16進数表示．04-> 0フラグ↲
     printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%04x%04x destMAC:%04x%04x\n",
             ifnum, myTermNum, vlanID,
             (int32_t)SrcMAC1, (int32_t)SrcMAC2, (int32_t)DestMAC1, (int32_t)DestMAC2);
