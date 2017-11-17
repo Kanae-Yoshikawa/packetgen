@@ -1,10 +1,9 @@
 # packetgen memo  
-・Ether.h & sendrecv.c -> vlanTag.c     
-・sendRawEth.c     
-・cpuid.c　　  
-・unp.h ; いらない？　　　　
-・ping.h ; いらない？　
-
+・Ether.h & sendrecv.c -> vlanTag.c  
+・sendRawEth.c  
+・cpuid.c  
+・unp.h ; いらない？  
+・ping.h ; いらない？  
 
 # L4
 ___
