@@ -1,7 +1,9 @@
 # packetgen memo  
-・Ether.h & sendrecv.c -> vlanTag.c
+・Ether.h & sendrecv.c -> VlanTag.c
  
-・sendRawEth.c -> ルータ自作見ながら書いたもの
+・sendRawEth.c -> MACの入れ方参考にした
+　
+・RawSocket.c -> ルータ自作見ながら書いたもの
  
 ・cpuid.c
  
