@@ -1,5 +1,13 @@
 
-#include "Ether.h"          // header fileとして配置． 注)include "" だから同一directory
+#include <stdio.h>
+#include <linux/if_packet.h>
+#include <linux/if_ether.h> //指定できるプロトコルリスト
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <elf.h>
+#include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -10,8 +18,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>         // _exit()
 #include <time.h>           // time(),
-#include <inttypes.h>       // uint16_t -> PRIu16,  //追加
-#include <net/ethernet.h>   // L2 protocol          //追加
+#include <inttypes.h>       // uint16_t -> PRIu16,      //追加
+#include <net/ethernet.h>   // L2 protocol              //追加
+
+
+
+
 
 
 #define VLAN        Yes         //YES?? ->　Ethe.hの#ifdefで呼び出してる
