@@ -20,7 +20,8 @@
 #define Period      1
 //enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　
 // ↑使ってなくない?? comment outしてみた    //列挙体p.191
-#define ETH_P_Exp   0x88b5      // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
+//#define ETH_P_Exp   0x88b5      // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
+#define ETH_P_Exp   0x0800      // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
 #define InitialReplyDelay   40      // これ何???
 #define MaxCommCount        9999    // これ何???
 //#define IFNAME  "ethX"        // or "gretapX"
