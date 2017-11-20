@@ -171,12 +171,12 @@ int main(int argc,char *argv[],char *envp[])
             perror("read");
         }
         else{
-            printf("sll_family = %d\n", from.ssl_family );
-            printf("sll_protocol = %d\n", from.ssl_protocol );
-            printf("sll_ifindex = %d\n", from.ssl_ifindex );
-            printf("sll_hatype = %d\n", from.ssl_pkttype );
-            printf("sll_halen = %d", from.ssl_halen );
-            printf("sll_addr = %02x:%02x:%02x:%02x:%02x:%02x:\n", from.ssl_addr[0], from.sll_addr[1], from.sll_addr[2], from.sll_addr[3], from.sll_addr[4], from.sll_addr[5], );
+            printf("sll_family = %d\n", from.sll_family );
+            printf("sll_protocol = %d\n", from.sll_protocol );
+            printf("sll_ifindex = %d\n", from.sll_ifindex );
+            printf("sll_hatype = %d\n", from.sll_pkttype );
+            printf("sll_halen = %d", from.sll_halen );
+            printf("sll_addr = %02x:%02x:%02x:%02x:%02x:%02x:\n", from.sll_addr[0], from.sll_addr[1], from.sll_addr[2], from.sll_addr[3], from.sll_addr[4], from.sll_addr[5], );
             AnalyzePacket(buf, size);
         }
     }
