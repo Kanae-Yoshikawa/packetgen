@@ -1,11 +1,16 @@
-//
-// +-------+-------+---------+----+------+-------+------------------+
-// | dMAC  | sMAC  |8100 VLAN|Type| IPv4 | [UDP] |     Payload      |
-// +-------+-------+---------+----+------+-------+------------------+
-//
-// +-------+-------+---------+----+------+----------+---------------+
-// | dMAC  | sMAC  |8100 VLAN|Type| IPv4 |   [TCP]  |    Payload    |
-// +-------+-------+---------+----+------+----------+---------------+
+/*
+
+   +-------+-------+---------+----+------+-------+------------------+
+   | dMAC  | sMAC  |8100 VLAN|Type| IPv4 | [UDP] |     Payload      |
+   +-------+-------+---------+----+------+-------+------------------+
+
+   +-------+-------+---------+----+------+----------+---------------+
+   | dMAC  | sMAC  |8100 VLAN|Type| IPv4 |   [TCP]  |    Payload    |
+   +-------+-------+---------+----+------+----------+---------------+
+
+ */
+
+
 
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
@@ -52,21 +57,12 @@ struct _EtherHeader {
     uint16_t srcMAC1;
     uint32_t srcMAC2;
 
-    /*
 #ifdef VLAN
-uint32_t VLANTag;
+    uint32_t VLANTag;
 #endif
-     */
+
     uint16_t type;
-#ifdef IPv4
-uint32_t IPTag1;
-uint32_t IPTag2;
-uint32_t IPTag3;
-uint32_t IPTag4;
-uint32_t IPTag5;
-    //uint32_t IPTag6;      //option
-#endif
-/*
+
 #ifdef IPv4
     uint8_t  VerLen;
     uint8_t  tos;
@@ -80,20 +76,13 @@ uint32_t IPTag5;
     uint32_t dstIP;
     //uint32_t option;
 #endif
-*/
 
-#ifdef  UDP
-uint32_t UDPTag1;
-uint32_t UDPTag2;
-#endif
-/*     
 #ifdef  UDP
     uint16_t srcPort;
     uint16_t dstPort;
     uint16_t len;
     uint16_t UdpChecksum;
 #endif
-*/
 
     /*
 #ifdef  TCP
@@ -242,11 +231,15 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     // ssize_t packetSize = payloadLength + sizeof(EtherPacket);
     memset(packet,0,sizeof(EtherPacket));
 
+    /* [memo]
+       uint8_t     不要
+       uint16_t    htons();
+       uint32_t    htonl();
+     */
     packet->destMAC1 = htons(destMAC1);
     packet->destMAC2 = htonl(destMAC2);
     packet->srcMAC1 = htons(srcMAC1);
     packet->srcMAC2 = htonl(srcMAC2);
-
 
     memset(&payload,0,sizeof(payload));     //追記
 
@@ -260,34 +253,24 @@ packet->VLANTag = htonl(vlanTag);
 
 
 #ifdef IPv4
-    packet->IPTag1 = htonl(0x4500002e);
-    packet->IPTag2 = htonl(0xddf24000);
-    packet->IPTag3 = htonl(0x4011cf79);     //後半2byte checksum  UDPなら11，TCPなら06
-    packet->IPTag4 = htonl(0x0a3a3c45);     //source IP
-    packet->IPTag5 = htonl(0x0a3a3c48);     //destination IP
-    /*
-       packet->VerLen    = htonl(0x45);
-       packet->tos       = htonl(0x00);
-       packet->totalLen  = htonl(0x002e);
-       packet->Identify  = htonl(0xddf2);
-       packet->flag      = htonl(0x4000);
-       packet->TTL       = htonl(0x40);
-       packet->protocol  = htonl(0x06);            //UDPなら11，TCPなら06
-       packet->IpChecksum= htonl(0xcf79);
-       packet->srcIP     = htonl(0x0a3a3c45);
-       packet->dstIP     = htonl(0x0a3a3c48);
-    //packet->option;
-     */
+    packet->VerLen    = 0x45;
+    packet->tos       = 0x00;
+    packet->totalLen  = htons(0x002e);
+    packet->Identify  = htons(0xddf2);
+    packet->flag      = htons(0x4000);
+    packet->TTL       = 0x40;
+    packet->protocol  = 0x11;               //UDPなら11，TCPなら06
+    packet->IpChecksum= htons(0xcf79);
+    packet->srcIP     = htonl(0x0a3a3c45);
+    packet->dstIP     = htonl(0x0a3a3c48);
 #endif
 
 
 #ifdef UDP
-    packet->UDPTag1 = htonl(0x00002710);        //source port, destination port
-    packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋め
-    //   packet->srcPort   = htonl(0x0000);
-    //   packet->dstPort   = htonl(0x2710);
-    //    packet->len       = htonl(0x001a);
-    //    packet->UdpChecksum = htonl(0x0000);
+    packet->srcPort     = htons(0x0000);      //source port
+    packet->dstPort     = htons(0x2710);      //destination port
+    packet->len         = htons(0x001a);      //UDP len
+    packet->UdpChecksum = htons(0x0000);    //UDP checksum
 #endif
 
     /*
