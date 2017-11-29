@@ -103,8 +103,11 @@ uint32_t TCPTag5;
     uint16_t   windowSize;
     uint16_t   TcpChecksum;
     uint16_t   urgentPointer;
-//uint?_t   option;
+    //uint?_t   option;
 #endif
+
+    int32_t payload;
+} __attribute__((packed));
 
 typedef struct _EtherHeader EtherPacket;
 
@@ -262,7 +265,7 @@ packet->VLANTag = htonl(vlanTag);
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x16;                   //UDPなら11，TCPなら06
+    packet->protocol  = 0x06;                   //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
@@ -287,18 +290,16 @@ packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
 #endif
      */
 #ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
-packet->srcPort        = htons(0x0000);           //source port
-packet->dstPort        = htons(0x2710);           //destination port
-packet->seqNumber      = htonl(0x00000001);       //sequence number
-packet->ackNumber      = htonl(0x00000002);       //acknowkedgement number
-packet->offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
-packet->windowSize     = htons(0x002d);           //window size
-packet->TcpChecksum    = htons(0x0000);           //checksum
-packet->urgentPointer  = htons(0x0000);           //urgent pointer 
-//packet-> = hton?();     //option
+    packet->srcPort        = htons(0x0000);           //source port
+    packet->dstPort        = htons(0x2710);           //destination port
+    packet->seqNumber      = htonl(0x00000001);       //sequence number
+    packet->ackNumber      = htonl(0x00000002);       //acknowkedgement number
+    packet->offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
+    packet->windowSize     = htons(0x002d);           //window size
+    packet->TcpChecksum    = htons(0x0000);           //checksum
+    packet->urgentPointer  = htons(0x0000);           //urgent pointer 
+    //packet-> = hton?();     //option
 #endif
-
-
 
     packet->payload = htonl(payload);
     // strncpy(packet->payload, payload, packetSize);
