@@ -23,11 +23,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/types.h>          //uint{8,16,32}_t
+#include <sys/socket.h>         //sa_family_t, socklen_t
 #include <string.h>
 #include <stdlib.h>
-#include <netinet/in.h>
+#include <netinet/in.h>         //htonl(),htons(),ntohs(),ntohl(),  in_addr_t, in_port_t
 #include <arpa/inet.h>
 #include <unistd.h>             // _exit()
 #include <time.h>               // time(),
@@ -43,8 +43,8 @@
 /* ここを変える */
 //#define VLAN    YES
 #define IPv4    YES
-#define UDP     YES
-//#define TCP    YES
+//#define UDP     YES
+#define TCP    YES
 
 
 
@@ -94,11 +94,17 @@ uint32_t TCPTag5;
     //uint32_t TCPTag6;      //option
 #endif
      */
-    int32_t  payload;
-
-} __attribute__((packed));
-
-
+#ifdef  TCP
+    uint16_t   srcPort;
+    uint16_t   dstPort;
+    uint16_t   seqNumber;
+    uint16_t   ackNumber;
+    uint16_t   offsetReservCtl;
+    uint16_t   windowSize;
+    uint16_t   TcpChecksum;
+    uint16_t   urgentPointer;
+//uint?_t   option;
+#endif
 
 typedef struct _EtherHeader EtherPacket;
 
@@ -242,15 +248,12 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->srcMAC2 = htonl(srcMAC2);
 
     memset(&payload,0,sizeof(payload));     //追記
-
     /*
 #ifdef VLAN
 packet->VLANTag = htonl(vlanTag);
 #endif
      */
-
     packet->type = htons(type);
-
 
 #ifdef IPv4
     packet->VerLen    = 0x45;
@@ -259,14 +262,14 @@ packet->VLANTag = htonl(vlanTag);
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x11;               //UDPなら11，TCPなら06
+    packet->protocol  = 0x16;                   //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
 #endif
 
 
-#ifdef UDP
+#ifdef UDP      //#ifdef IPv4 の packet->protocol を11に書き換えること
     packet->srcPort     = htons(0x0000);      //source port
     packet->dstPort     = htons(0x2710);      //destination port
     packet->len         = htons(0x001a);      //UDP len
@@ -274,7 +277,7 @@ packet->VLANTag = htonl(vlanTag);
 #endif
 
     /*
-#ifdef TCP
+#ifdef TCP     
 packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
 packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
 packet->TCPTag3 = htonl(0x00000002);        //acknowkedgement number　？？？とりあえず2にした
@@ -283,6 +286,19 @@ packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
     //packet->TCPTag6 = htonl(0x--------);      //option
 #endif
      */
+#ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
+packet->srcPort        = htons(0x0000);           //source port
+packet->dstPort        = htons(0x2710);           //destination port
+packet->seqNumber      = htonl(0x00000001);       //sequence number
+packet->ackNumber      = htonl(0x00000002);       //acknowkedgement number
+packet->offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
+packet->windowSize     = htons(0x002d);           //window size
+packet->TcpChecksum    = htons(0x0000);           //checksum
+packet->urgentPointer  = htons(0x0000);           //urgent pointer 
+//packet-> = hton?();     //option
+#endif
+
+
 
     packet->payload = htonl(payload);
     // strncpy(packet->payload, payload, packetSize);
