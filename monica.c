@@ -1,5 +1,14 @@
+//
+// +-------+-------+---------+----+------+-------+------------------+
+// | dMAC  | sMAC  |8100 VLAN|Type| IPv4 | [UDP] |     Payload      |
+// +-------+-------+---------+----+------+-------+------------------+
+//
+// +-------+-------+---------+----+------+----------+---------------+
+// | dMAC  | sMAC  |8100 VLAN|Type| IPv4 |   [TCP]  |    Payload    |
+// +-------+-------+---------+----+------+----------+---------------+
+
 #include <linux/if_packet.h>
-#include <linux/if_ether.h>         //指定できるプロトコルリスト
+#include <linux/if_ether.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -21,26 +30,19 @@
 #include <net/ethernet.h>       // L2 protocol          //追加
 
 
-
 #define DEBUG       1
 #define MAX_PACKET_SIZE 2048    // Sufficiently larger than the MTU
 #define Period      1
-//enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　
-// ↑使ってない?? comment outした    //列挙体p.191
+//enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　// 使ってない? 列挙体p.191
 
-
-//#define VLAN    YES
+/* ここを変える */
+#define VLAN    YES
 #define IPv4    YES
-//#define UDP     YES
-#define TCP    YES
+#define UDP     YES
+//#define TCP    YES
 
 
-// 0       6      12      12/16 14/18           18/22
-// +-------+-------+---------+----+---------------+
-// | dMAC  | sMAC  |8100 VLAN|Type|Payload (4Bfix)|
-// +-------+-------+---------+----+---------------+
-//                  <------->
-//               when VLAN == Yes
+
 
 
 
@@ -50,21 +52,34 @@ struct _EtherHeader {
     uint16_t srcMAC1;
     uint32_t srcMAC2;
 
-    /*
+
 #ifdef VLAN
 uint32_t VLANTag;
 #endif
-     */
 
     uint16_t type;
-
+    /*
 #ifdef IPv4
-    uint32_t IPTag1;
-    uint32_t IPTag2;
-    uint32_t IPTag3;
-    uint32_t IPTag4;
-    uint32_t IPTag5;
+uint32_t IPTag1;
+uint32_t IPTag2;
+uint32_t IPTag3;
+uint32_t IPTag4;
+uint32_t IPTag5;
     //uint32_t IPTag6;      //option
+#endif
+     */
+#ifdef IPv4
+    uint8_t  VerLen;
+    uint8_t  tos;
+    uint16_t totalLen;
+    uint16_t Identify;
+    uint16_t flag;
+    uint8_t  TTL;
+    uint8_t  protocol;
+    uint16_t Checksum;
+    uint32_t srcIP;
+    uint32_t dstIP;
+    //uint32_t option;
 #endif
 
     /*
@@ -73,51 +88,69 @@ uint32_t UDPTag1;
 uint32_t UDPTag2;
 #endif
      */
-
-#ifdef  TCP
-    uint32_t TCPTag1;
-    uint32_t TCPTag2;
-    uint32_t TCPTag3;
-    uint32_t TCPTag4;
-    uint32_t TCPTag5;
-    //uint32_t TCPTag6;      //option
+#ifdef  UDP
+    uint16_t srcPort;
+    uint16_t dstPort;
+    uint16_t len;
+    uint16_t Checksum;
 #endif
 
+
+    /*
+#ifdef  TCP
+uint32_t TCPTag1;
+uint32_t TCPTag2;
+uint32_t TCPTag3;
+uint32_t TCPTag4;
+uint32_t TCPTag5;
+    //uint32_t TCPTag6;      //option
+#endif
+     */
     int32_t  payload;
 
 } __attribute__((packed));
 
+
+
 typedef struct _EtherHeader EtherPacket;
 
 
+
+
+
+
+
+
+
 /*****
- * [ ethernet frame type ] 
+ * [ ethernet frame type ]
  * /usr/include/net/ethernet.h
- * 適宜使うものにtypeを変更すること
  *****/
-//#define ETH_P_Exp   0x8100      // type = IEEE 802.1Q VLAN tagging
-#define ETH_P_Exp   0x0800      // type = IP
-//#define ETH_P_Exp   0x86dd      // type = IPv6
-//#define ETH_P_Exp   0x0806      // type = ARP  address resolution
+
+/* ここを変える */
+#define ETH_P_Exp   0x8100        // type = IEEE 802.1Q VLAN tagging
+//#define ETH_P_Exp   0x0800          // type = IP
+//#define ETH_P_Exp   0x86dd        // type = IPv6
+//#define ETH_P_Exp   0x0806        // type = ARP  address resolution
 
 
 
 
 #define InitialReplyDelay   40      // これ何???
 #define MaxCommCount        9999    // これ何???
-#define IFNAME  "ethX"        // or "gretapX"
-//#define IFNAME  "p5p1"           // abileneのinterface名に変更した
+#define IFNAME  "ethX"              // or "gretapX"
+//#define IFNAME  "p5p1"            // abileneのinterface名に変更した
 
 extern void _exit(int32_t);     //プロトタイプ宣言．外部関数参照
 
 
 /***
  * MAC addressを指定. MAC1とMAC2で前後を分離
- * MAC addrは16進数．「0x」付け忘れ注意
+ * 16進数「0x」付け忘れ注意
  * {src, dst, x, y}で借り置きした
  * 例）srcのMAC address -> MAC1[0]とMAC2[0]を直結したもの
  ***/
-#define NTerminals  4           // 指定するMAC address数
+#define NTerminals  4           // 指定できるMAC address数
 uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0200, 0x0200};
 uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c2f, 0x00000003, 0x00000004};
 
@@ -216,57 +249,51 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->srcMAC2 = htonl(srcMAC2);
 
 
-    //追記
-    memset(&payload,0,sizeof(payload));
-    /*
+    memset(&payload,0,sizeof(payload));     //追記
+
+
 #ifdef VLAN
 packet->VLANTag = htonl(vlanTag);
 #endif
-     */
-    packet->type = htons(type);
+    
+
+packet->type = htons(type);
 
 
 #ifdef IPv4
-    //2進数
-    //    uint32_t IPTag1 = '01000101010000000000000000010100';
-    //    uint32_t IPTag2 = '00000000000000000100000000000000';
-    //    uint32_t IPTag3 = '10010111010101000000000000000000';  //後半2byte checksum
-    //    uint32_t IPTag4 = '00001010001110100011110001000101';
-    //    uint32_t IPTag5 = '00001010001110100011110001001000';
-    //10進数    
-    //    uint32_t IPTag1 = 1161822228;
-    //    uint32_t IPTag2 = 16384;
-    //    uint32_t IPTag3 = 2538864640;  //後半2byte checksum
-    //    uint32_t IPTag4 = 171588677;
-    //    uint32_t IPTag5 = 171588680;
-    //16進数    
-    //uint32_t IPTag1 = 0x45400014;
-    //uint32_t IPTag2 = 0x4000;
-    //uint32_t IPTag3 = 0x97540000;  //後半2byte checksum
-    //uint32_t IPTag4 = 0xA3A3C45;
-    //uint32_t IPTag5 = 0xA3A3C48;
-    // udp packetのip headerを16進数でコピペ
-    //uint32_t IPTag1 = 0x45000080;
-    //uint32_t IPTag2 = 0xddf24000;
-    //uint32_t IPTag3 = 0x4011cf79;  //後半2byte checksum
-    //uint32_t IPTag4 = 0x0a3a3c45;
-    //uint32_t IPTag5 = 0x0a3a3c48;
+    /*
+       packet->IPTag1 = htonl(0x4500002e);
+       packet->IPTag2 = htonl(0xddf24000);
+       packet->IPTag3 = htonl(0x4006cf79);     //後半2byte checksum  UDPなら11，TCPなら06
+       packet->IPTag4 = htonl(0x0a3a3c45);     //source IP
+       packet->IPTag5 = htonl(0x0a3a3c48);     //destination IP
+     */
+    packet->VerLen    = htonl(0x45);
+    packet->tos       = htonl(0x00);
+    packet->totalLen  = htonl(0x002e);
+    packet->Identify  = htonl(0xddf2);
+    packet->flag      = htonl(0x4000);
+    packet->TTL       = htonl(0x40);
+    packet->protocol  = htonl(0x06);            //UDPなら11，TCPなら06
+    packet->Checksum  = htonl(0xcf79);
+    packet->srcIP     = htonl(0x0a3a3c45);
+    packet->dstIP     = htonl(0x0a3a3c45);
+    //packet->option;
+#endif
 
-    packet->IPTag1 = htonl(0x4500002e);
-    packet->IPTag2 = htonl(0xddf24000);
-    packet->IPTag3 = htonl(0x4006cf79);     //後半2byte checksum  UDPなら11，TCPなら06
-    packet->IPTag4 = htonl(0x0a3a3c45);     //source IP
-    packet->IPTag5 = htonl(0x0a3a3c48);     //destination IP
 
+#ifdef UDP
+    /*
+       packet->UDPTag1 = htonl(0x00002710);        //source port, destination port
+       packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋め
+     */
+    packet->srcPort   =htonl(0x0000);
+    packet->dstPort   =htonl(0x2710);
+    packet->len       =htonl(0x001a);
+    packet->Checksum  =htonl(0x0000);
 #endif
 
     /*
-#ifdef UDP
-packet->UDPTag1 = htonl(0x00002710);        //source port, destination port
-packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋め
-#endif
-     */
-
 #ifdef TCP
     packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
     packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
@@ -275,6 +302,7 @@ packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋
     packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
     //packet->TCPTag6 = htonl(0x--------);      //option
 #endif
+*/
 
     packet->payload = htonl(payload);
     // strncpy(packet->payload, payload, packetSize);
@@ -284,6 +312,8 @@ packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋
 
 
 int32_t lastPayload = -1;
+
+
 
 /**
  * Print IPEC packet content
