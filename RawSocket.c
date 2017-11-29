@@ -184,4 +184,41 @@ int main(int argc,char *argv[],char *envp[])
     close(soc);
 
     return(0);
+
 }
+
+
+
+
+
+//////////////////////////////////////
+//////////    memo    ////////////////
+//////////////////////////////////////
+[payload]
+
+    i++
+
+[l4 header]
+    UDP     s = socket(PF_INET, SOCK_DGRAM, 0)
+    TCP     s = socket(PF_INET, SOCK_DGRAM, 0)
+    
+   myport = xxx;↲
+   memset(&myskt, 0, sizeof myskt);↲
+   myskt.sin_family = AF_INET;↲
+   myskt.sin_port = htons(hoge);↲
+   myskt.sin_addr.s_addr = htonl(x.x.x.x);
+
+
+
+[l3 header]
+    IP      s = socket(PF_INET, SOCK_RAW, )
+
+
+[l2 header]
+    Ethernet(IP packetだけ)    
+            s = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_IP))
+    Ethernet(IP packet以外も)
+            s = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))
+
+
+
