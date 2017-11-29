@@ -36,7 +36,7 @@
 //enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　// 使ってない? 列挙体p.191
 
 /* ここを変える */
-#define VLAN    YES
+//#define VLAN    YES
 #define IPv4    YES
 #define UDP     YES
 //#define TCP    YES
@@ -52,13 +52,12 @@ struct _EtherHeader {
     uint16_t srcMAC1;
     uint32_t srcMAC2;
 
-
+    /*
 #ifdef VLAN
 uint32_t VLANTag;
 #endif
-
+     */
     uint16_t type;
-    /*
 #ifdef IPv4
 uint32_t IPTag1;
 uint32_t IPTag2;
@@ -67,7 +66,7 @@ uint32_t IPTag4;
 uint32_t IPTag5;
     //uint32_t IPTag6;      //option
 #endif
-     */
+/*
 #ifdef IPv4
     uint8_t  VerLen;
     uint8_t  tos;
@@ -76,25 +75,25 @@ uint32_t IPTag5;
     uint16_t flag;
     uint8_t  TTL;
     uint8_t  protocol;
-    uint16_t Checksum;
+    uint16_t IpChecksum;
     uint32_t srcIP;
     uint32_t dstIP;
     //uint32_t option;
 #endif
+*/
 
-    /*
 #ifdef  UDP
 uint32_t UDPTag1;
 uint32_t UDPTag2;
 #endif
-     */
+/*     
 #ifdef  UDP
     uint16_t srcPort;
     uint16_t dstPort;
     uint16_t len;
-    uint16_t Checksum;
+    uint16_t UdpChecksum;
 #endif
-
+*/
 
     /*
 #ifdef  TCP
@@ -128,8 +127,8 @@ typedef struct _EtherHeader EtherPacket;
  *****/
 
 /* ここを変える */
-#define ETH_P_Exp   0x8100        // type = IEEE 802.1Q VLAN tagging
-//#define ETH_P_Exp   0x0800          // type = IP
+//#define ETH_P_Exp   0x8100        // type = IEEE 802.1Q VLAN tagging
+#define ETH_P_Exp   0x0800          // type = IP
 //#define ETH_P_Exp   0x86dd        // type = IPv6
 //#define ETH_P_Exp   0x0806        // type = ARP  address resolution
 
@@ -251,58 +250,56 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 
     memset(&payload,0,sizeof(payload));     //追記
 
-
+    /*
 #ifdef VLAN
 packet->VLANTag = htonl(vlanTag);
 #endif
-    
+     */
 
-packet->type = htons(type);
+    packet->type = htons(type);
 
 
 #ifdef IPv4
+    packet->IPTag1 = htonl(0x4500002e);
+    packet->IPTag2 = htonl(0xddf24000);
+    packet->IPTag3 = htonl(0x4011cf79);     //後半2byte checksum  UDPなら11，TCPなら06
+    packet->IPTag4 = htonl(0x0a3a3c45);     //source IP
+    packet->IPTag5 = htonl(0x0a3a3c48);     //destination IP
     /*
-       packet->IPTag1 = htonl(0x4500002e);
-       packet->IPTag2 = htonl(0xddf24000);
-       packet->IPTag3 = htonl(0x4006cf79);     //後半2byte checksum  UDPなら11，TCPなら06
-       packet->IPTag4 = htonl(0x0a3a3c45);     //source IP
-       packet->IPTag5 = htonl(0x0a3a3c48);     //destination IP
-     */
-    packet->VerLen    = htonl(0x45);
-    packet->tos       = htonl(0x00);
-    packet->totalLen  = htonl(0x002e);
-    packet->Identify  = htonl(0xddf2);
-    packet->flag      = htonl(0x4000);
-    packet->TTL       = htonl(0x40);
-    packet->protocol  = htonl(0x06);            //UDPなら11，TCPなら06
-    packet->Checksum  = htonl(0xcf79);
-    packet->srcIP     = htonl(0x0a3a3c45);
-    packet->dstIP     = htonl(0x0a3a3c45);
+       packet->VerLen    = htonl(0x45);
+       packet->tos       = htonl(0x00);
+       packet->totalLen  = htonl(0x002e);
+       packet->Identify  = htonl(0xddf2);
+       packet->flag      = htonl(0x4000);
+       packet->TTL       = htonl(0x40);
+       packet->protocol  = htonl(0x06);            //UDPなら11，TCPなら06
+       packet->IpChecksum= htonl(0xcf79);
+       packet->srcIP     = htonl(0x0a3a3c45);
+       packet->dstIP     = htonl(0x0a3a3c48);
     //packet->option;
+     */
 #endif
 
 
 #ifdef UDP
-    /*
-       packet->UDPTag1 = htonl(0x00002710);        //source port, destination port
-       packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋め
-     */
-    packet->srcPort   =htonl(0x0000);
-    packet->dstPort   =htonl(0x2710);
-    packet->len       =htonl(0x001a);
-    packet->Checksum  =htonl(0x0000);
+    packet->UDPTag1 = htonl(0x00002710);        //source port, destination port
+    packet->UDPTag2 = htonl(0x001a0000);        //UDP len, UDP Checksumは一旦0埋め
+    //   packet->srcPort   = htonl(0x0000);
+    //   packet->dstPort   = htonl(0x2710);
+    //    packet->len       = htonl(0x001a);
+    //    packet->UdpChecksum = htonl(0x0000);
 #endif
 
     /*
 #ifdef TCP
-    packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
-    packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
-    packet->TCPTag3 = htonl(0x00000002);        //acknowkedgement number　？？？とりあえず2にした
-    packet->TCPTag4 = htonl(0x8011002d);        //data offset, resrved, ctl flag, window size　コピペ
-    packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
+packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
+packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
+packet->TCPTag3 = htonl(0x00000002);        //acknowkedgement number　？？？とりあえず2にした
+packet->TCPTag4 = htonl(0x8011002d);        //data offset, resrved, ctl flag, window size　コピペ
+packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
     //packet->TCPTag6 = htonl(0x--------);      //option
 #endif
-*/
+     */
 
     packet->payload = htonl(payload);
     // strncpy(packet->payload, payload, packetSize);
