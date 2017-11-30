@@ -41,10 +41,10 @@
 //enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　// 使ってない? 列挙体p.191
 
 /* ここを変える */
-//#define VLAN    YES
+#define VLAN    YES
 #define IPv4    YES
-//#define UDP     YES
-#define TCP    YES
+#define UDP     YES
+//#define TCP    YES
 
 
 
@@ -84,16 +84,6 @@ struct _EtherHeader {
     uint16_t UdpChecksum;
 #endif
 
-    /*
-#ifdef  TCP
-uint32_t TCPTag1;
-uint32_t TCPTag2;
-uint32_t TCPTag3;
-uint32_t TCPTag4;
-uint32_t TCPTag5;
-    //uint32_t TCPTag6;      //option
-#endif
-     */
 #ifdef  TCP
     uint16_t   srcPort;
     uint16_t   dstPort;
@@ -251,11 +241,11 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->srcMAC2 = htonl(srcMAC2);
 
     memset(&payload,0,sizeof(payload));     //追記
-    /*
+
 #ifdef VLAN
 packet->VLANTag = htonl(vlanTag);
 #endif
-     */
+
     packet->type = htons(type);
 
 #ifdef IPv4
@@ -265,7 +255,7 @@ packet->VLANTag = htonl(vlanTag);
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x06;                   //UDPなら11，TCPなら06
+    packet->protocol  = 0x11;                   //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
@@ -276,19 +266,9 @@ packet->VLANTag = htonl(vlanTag);
     packet->srcPort     = htons(0x0000);      //source port
     packet->dstPort     = htons(0x2710);      //destination port
     packet->len         = htons(0x001a);      //UDP len
-    packet->UdpChecksum = htons(0x0000);    //UDP checksum
+    packet->UdpChecksum = htons(0x0000);      //UDP checksum
 #endif
 
-    /*
-#ifdef TCP     
-packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
-packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
-packet->TCPTag3 = htonl(0x00000002);        //acknowkedgement number　？？？とりあえず2にした
-packet->TCPTag4 = htonl(0x8011002d);        //data offset, resrved, ctl flag, window size　コピペ
-packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
-    //packet->TCPTag6 = htonl(0x--------);      //option
-#endif
-     */
 #ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
     packet->srcPort        = htons(0x0000);           //source port
     packet->dstPort        = htons(0x2710);           //destination port
