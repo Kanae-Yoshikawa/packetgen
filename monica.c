@@ -84,16 +84,6 @@ struct _EtherHeader {
     uint16_t UdpChecksum;
 #endif
 
-    /*
-#ifdef  TCP
-uint32_t TCPTag1;
-uint32_t TCPTag2;
-uint32_t TCPTag3;
-uint32_t TCPTag4;
-uint32_t TCPTag5;
-    //uint32_t TCPTag6;      //option
-#endif
-     */
 #ifdef  TCP
     uint16_t   srcPort;
     uint16_t   dstPort;
@@ -279,16 +269,6 @@ packet->VLANTag = htonl(vlanTag);
     packet->UdpChecksum = htons(0x0000);    //UDP checksum
 #endif
 
-    /*
-#ifdef TCP     
-packet->TCPTag1 = htonl(0x00002710);        //source port, destination port
-packet->TCPTag2 = htonl(0x00000001);        //sequence number  開始はどこから？？とりあえず1にした
-packet->TCPTag3 = htonl(0x00000002);        //acknowkedgement number　？？？とりあえず2にした
-packet->TCPTag4 = htonl(0x8011002d);        //data offset, resrved, ctl flag, window size　コピペ
-packet->TCPTag5 = htonl(0x00000000);        //checksum, urgent pointer  0埋め
-    //packet->TCPTag6 = htonl(0x--------);      //option
-#endif
-     */
 #ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
     packet->srcPort        = htons(0x0000);           //source port
     packet->dstPort        = htons(0x2710);           //destination port
