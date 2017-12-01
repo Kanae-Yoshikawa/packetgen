@@ -12,8 +12,8 @@
 
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
+#include <net/if.h>             // struct ifreq
+#include <sys/ioctl.h>          // ioctl()
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -21,11 +21,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <sys/types.h>          //uint{8,16,32}_t
-#include <sys/socket.h>         //sa_family_t, socklen_t
+#include <sys/types.h>          // uint{8,16,32}_t
+#include <sys/socket.h>         // sa_family_t, socklen_t
 #include <string.h>
 #include <stdlib.h>
-#include <netinet/in.h>         //htonl(),htons(),ntohs(),ntohl(),  in_addr_t, in_port_t
+#include <netinet/in.h>         // htonl(),htons(),ntohs(),ntohl(),  in_addr_t, in_port_t
 #include <arpa/inet.h>
 #include <unistd.h>             // _exit()
 #include <time.h>               // time(),
@@ -112,24 +112,19 @@ typedef struct _EtherHeader EtherPacket;
 
 
 #define InitialReplyDelay   40      // これ何???
-#define MaxCommCount        9999    // これ何???
+#define MaxCommCount        9999    // sendとreceiveのtotal上限回数
 #define IFNAME  "ethX"              // or "gretapX"
 //#define IFNAME  "p5p1"            // abileneのinterface名に変更した
-
-extern void _exit(int32_t);     //プロトタイプ宣言．外部関数参照
+//extern void _exit(int32_t);       //プロトタイプ宣言．外部関数参照
 
 
 /***
- * MAC addressを指定. MAC1とMAC2で前後を分離
- * 16進数「0x」付け忘れ注意
- * {src, dst, x, y}で借り置きした
- * 例）srcのMAC address -> MAC1[0]とMAC2[0]を直結したもの
+ * MAC addressを指定. MAC1とMAC2で前後を分離. 16進数「0x」付け忘れ注意
+ * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]とMAC2[0]を直結
  ***/
-#define NTerminals  4           // 指定できるMAC address数
+#define NTerminals  4               // 指定できるMAC address数
 uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0200, 0x0200};
 uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c2f, 0x00000003, 0x00000004};
-
-
 
 
 
@@ -183,7 +178,6 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
     };
 
     /* flush all received packets. 
-     *
      * raw-socket receives packets from all interfaces
      * when the socket is not bound to an interface
      */
@@ -216,6 +210,7 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
 ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
         int32_t payload) {
+<<<<<<< HEAD
     
     
 
@@ -224,9 +219,12 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 
     
     
+=======
+>>>>>>> 5d1dd200d04034c28cd781dce1d37de5677474c1
     ssize_t packetSize = sizeof(EtherPacket);
     //ssize_t packetSize = sizeof(EtherPacket)-20;
     // ssize_t packetSize = payloadLength + sizeof(EtherPacket);
+    
     memset(packet,0,sizeof(EtherPacket));
 
     /* [memo]
@@ -254,7 +252,7 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x11;                   //UDPなら11，TCPなら06
+    packet->protocol  = 0x11;                 //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
@@ -385,14 +383,13 @@ void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
 /****************
  * Main program *
  ****************/
-//int32_t main(int32_t argc, char **argv) {     //original
-int32_t main(int32_t argc, char *argv[]) {
+int32_t main(int32_t argc, char **argv) {      // **argv = *argv[]
     int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
     int32_t myTermNum = 0;      //MAC1{}の何要素目か
     int32_t destTermNum = 1;    //MAC2{}の何要素目か
     int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
     uint16_t vlanID = 173;      //vlanIDを指定
-    // int32_t i;               //使ってない?からコメントアウト
+    int32_t i;                  // ???どこで使ってる？？
 
 
     // Get terminal and interface numbers（<-とは？） from the command line
@@ -435,7 +432,7 @@ int32_t main(int32_t argc, char *argv[]) {
     uint16_t DestMAC1 = MAC1[destTermNum];
     uint32_t DestMAC2 = MAC2[destTermNum];
 
-    //MAC addr->printfする時にキャストしている  uintからint↲
+    // MAC addr->printfする時にキャストしている  uintからint↲
     // 変換指定子 %x ->小文字16進数表示．04-> 0フラグ↲
     printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%04x%04x destMAC:%04x%04x\n",
             ifnum, myTermNum, vlanID,
