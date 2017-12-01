@@ -208,12 +208,12 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
 
 
 //original
-//ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-//        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
-//       int32_t payload) {
 ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
-        int32_t payload) {
+        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
+       int32_t payload) {
+//ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
+//        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
+//        int32_t payload) {
 
 
 
@@ -239,7 +239,8 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->VLANTag = htonl(vlanTag);
 #endif
 
-    packet->type = htons(type);
+    //packet->type = htons(type);
+    packet->type = 0x0800;       //ethernet header = IP
 
 #ifdef IPv4
     packet->VerLen    = 0x45;
@@ -304,12 +305,12 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
              * Send packets to terminals
              */
             //original
-            //void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-            //    uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
-            //    int32_t *count) {
             void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-                uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
+                uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
                 int32_t *count) {
+            //void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+            //    uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
+            //    int32_t *count) {
 
 
                 int32_t i;
@@ -323,10 +324,10 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
                 sll.sll_ifindex = ifindex;
 
                 //original
-                //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-                //      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
                 ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-                        SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
+                      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
+                //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+                //        SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
 
                 ssize_t sizeout = sendto(fd, packet, packetSize, 0,
                         (struct sockaddr *)&sll, sizeof(sll));
