@@ -10,8 +10,6 @@
 
  */
 
-
-
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <net/if.h>
@@ -45,10 +43,6 @@
 #define IPv4    YES
 #define UDP     YES
 //#define TCP    YES
-
-
-
-
 
 
 struct _EtherHeader {
@@ -85,14 +79,14 @@ struct _EtherHeader {
 #endif
 
 #ifdef  TCP
-    uint16_t   srcPort;
-    uint16_t   dstPort;
-    uint16_t   seqNumber;
-    uint16_t   ackNumber;
-    uint16_t   offsetReservCtl;
-    uint16_t   windowSize;
-    uint16_t   TcpChecksum;
-    uint16_t   urgentPointer;
+    uint16_t srcPort;
+    uint16_t dstPort;
+    uint16_t seqNumber;
+    uint16_t ackNumber;
+    uint16_t offsetReservCtl;
+    uint16_t windowSize;
+    uint16_t TcpChecksum;
+    uint16_t urgentPointer;
     //uint?_t   option;
 #endif
 
@@ -100,11 +94,6 @@ struct _EtherHeader {
 } __attribute__((packed));
 
 typedef struct _EtherHeader EtherPacket;
-
-
-
-
-
 
 
 
@@ -119,7 +108,6 @@ typedef struct _EtherHeader EtherPacket;
 #define ETH_P_Exp   0x0800          // type = IP
 //#define ETH_P_Exp   0x86dd        // type = IPv6
 //#define ETH_P_Exp   0x0806        // type = ARP  address resolution
-
 
 
 
@@ -221,12 +209,23 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
 /**
  * Create an IPEC packet
  */
-
+//original
+//ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
+//        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
+//       int32_t payload) {
 ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
+        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
         int32_t payload) {
-    //ssize_t packetSize = sizeof(EtherPacket)-20;
+    
+    
+
+
+
+
+    
+    
     ssize_t packetSize = sizeof(EtherPacket);
+    //ssize_t packetSize = sizeof(EtherPacket)-20;
     // ssize_t packetSize = payloadLength + sizeof(EtherPacket);
     memset(packet,0,sizeof(EtherPacket));
 
@@ -243,7 +242,7 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     memset(&payload,0,sizeof(payload));     //追記
 
 #ifdef VLAN
-packet->VLANTag = htonl(vlanTag);
+    packet->VLANTag = htonl(vlanTag);
 #endif
 
     packet->type = htons(type);
@@ -287,9 +286,7 @@ packet->VLANTag = htonl(vlanTag);
     return packetSize;
 }
 
-
 int32_t lastPayload = -1;
-
 
 
 /**
@@ -324,9 +321,12 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
             sll.sll_family = AF_PACKET;
             sll.sll_protocol = htons(ETH_P_ALL);   // Ethernet type = Trans. Ether Bridging
             sll.sll_ifindex = ifindex;
-
+            
+            //original
+            //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+            //      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
             ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-                    SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
+                    SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
 
             ssize_t sizeout = sendto(fd, packet, packetSize, 0,
                     (struct sockaddr *)&sll, sizeof(sll));
