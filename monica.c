@@ -245,8 +245,6 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->VerLen    = 0x45;
     packet->tos       = 0x00;
     packet->totalLen  = htons(0x0080);    //error;IPv4 total lentgh exceeds packet length 32byte
-    //packet->totalLen  = htons(0x002e);    //error;IPv4 total lentgh exceeds packet length 32byte
-    //packet->totalLen  = htons(0x0020);      // 32(10)byte = 20(16)byte 
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
