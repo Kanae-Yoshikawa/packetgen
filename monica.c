@@ -104,10 +104,12 @@ typedef struct _EtherHeader EtherPacket;
  *****/
 
 /* ここを変える */
-//#define ETH_P_Exp   0x8100        // type = IEEE 802.1Q VLAN tagging
-#define ETH_P_Exp   0x0800          // type = IP
-//#define ETH_P_Exp   0x86dd        // type = IPv6
-//#define ETH_P_Exp   0x0806        // type = ARP  address resolution
+#define ETH_P_Exp   0x0800          // Ethernet type = IP
+//#define ETH_P_Exp   0x8100        // Ethernet type = IEEE 802.1Q VLAN tagging 
+//#define ETH_P_Exp   0x86dd        // Ethernet type = IPv6
+//#define ETH_P_Exp   0x0806        // Ethernet type = ARP  address resolution
+//#define ETH_P_Exp   0x88b5        // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
+                                    // 88b5はinterface cardによって使用不可
 
 
 
@@ -203,6 +205,8 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
 /**
  * Create an IPEC packet
  */
+
+
 //original
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 //        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
@@ -210,21 +214,13 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
 ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
         int32_t payload) {
-<<<<<<< HEAD
-    
-    
 
 
 
-
-    
-    
-=======
->>>>>>> 5d1dd200d04034c28cd781dce1d37de5677474c1
     ssize_t packetSize = sizeof(EtherPacket);
     //ssize_t packetSize = sizeof(EtherPacket)-20;
     // ssize_t packetSize = payloadLength + sizeof(EtherPacket);
-    
+
     memset(packet,0,sizeof(EtherPacket));
 
     /* [memo]
@@ -307,37 +303,43 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
             /**
              * Send packets to terminals
              */
-            void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-                uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
-                int32_t *count) {
-            int32_t i;
-            unsigned char packet[MAX_PACKET_SIZE];
-            // unsigned char *payload = "Hello!";
-
-            struct sockaddr_ll sll;
-            memset(&sll, 0, sizeof(sll));
-            sll.sll_family = AF_PACKET;
-            sll.sll_protocol = htons(ETH_P_ALL);   // Ethernet type = Trans. Ether Bridging
-            sll.sll_ifindex = ifindex;
-            
             //original
-            //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-            //      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
-            ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-                    SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
+            //void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+            //    uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
+            //    int32_t *count) {
+            void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+                uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
+                int32_t *count) {
 
-            ssize_t sizeout = sendto(fd, packet, packetSize, 0,
-                    (struct sockaddr *)&sll, sizeof(sll));
 
-            printPacket((EtherPacket*)packet, packetSize, "Sent:    ");
-            if (sizeout < 0) {
-                perror("sendto");
-            } else {
-                if (DEBUG) {
-                    printf("%d bytes sent through interface (ifindex) %d\n",
-                            (int32_t)sizeout, (int32_t)ifindex);
+                int32_t i;
+                unsigned char packet[MAX_PACKET_SIZE];
+                // unsigned char *payload = "Hello!";
+
+                struct sockaddr_ll sll;
+                memset(&sll, 0, sizeof(sll));
+                sll.sll_family = AF_PACKET;
+                sll.sll_protocol = htons(ETH_P_ALL);   // Ethernet type = Trans. Ether Bridging
+                sll.sll_ifindex = ifindex;
+
+                //original
+                //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+                //      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
+                ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+                        SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
+
+                ssize_t sizeout = sendto(fd, packet, packetSize, 0,
+                        (struct sockaddr *)&sll, sizeof(sll));
+
+                printPacket((EtherPacket*)packet, packetSize, "Sent:    ");
+                if (sizeout < 0) {
+                    perror("sendto");
+                } else {
+                    if (DEBUG) {
+                        printf("%d bytes sent through interface (ifindex) %d\n",
+                                (int32_t)sizeout, (int32_t)ifindex);
+                    }
                 }
-            }
             }
 
 void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
