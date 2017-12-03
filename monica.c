@@ -225,7 +225,7 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x11;                 //UDPなら11，TCPなら06
+    packet->protocol  = 0x06;                 //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
@@ -355,7 +355,6 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         int32_t destTermNum = 1;    //MAC2{}の何要素目か
         int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
         uint16_t vlanID = 173;      //vlanIDを指定
-        //int32_t i;                  // ???どこで使ってる？？
 
         // Set locators and IDs using terminal number:
         uint16_t SrcMAC1  = MAC1[myTermNum];
