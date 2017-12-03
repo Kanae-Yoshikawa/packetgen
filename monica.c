@@ -44,7 +44,8 @@
 //#define TCP    YES
 
 
-struct _EtherHeader {
+//struct _EtherHeader {
+struct _L2L3L4Header {
     uint16_t destMAC1;
     uint32_t destMAC2;
     uint16_t srcMAC1;
@@ -89,11 +90,12 @@ struct _EtherHeader {
     //uint?_t   option;
 #endif
 
-    char payload[pValue];
+    //char payload[pValue];
 
 } __attribute__((packed));
 
-typedef struct _EtherHeader EtherPacket;
+//typedef struct _EtherHeader EtherPacket;
+typedef struct _L2L3L4Header Header;
 
 
 /* ここを変える */
@@ -103,7 +105,7 @@ typedef struct _EtherHeader EtherPacket;
 //#define ETH_P_Exp   0x0806        // Ethernet type = ARP  address resolution
 
 #define InitialReplyDelay   40      // これ何???
-#define MaxCommCount        9999    // sendとreceiveのtotal上限回数
+#define MaxCommCount        9999    // send 回数
 #define IFNAME  "ethX"              // or "gretapX"
 //#define IFNAME  "p5p1"            // abileneのinterface名に変更した
 //extern void _exit(int32_t);       //プロトタイプ宣言．外部関数参照
@@ -197,12 +199,16 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
 /*****************
  * Create packet *
  *****************/
-ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
+//ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
+ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
+        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t payload)
+        //uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 {
-    ssize_t packetSize = sizeof(EtherPacket);
+    //ssize_t packetSize = sizeof(EtherPacket);
+    ssize_t packetSize = sizeof(Header) + sizeof(pValue);
 
-    memset(packet,0,sizeof(EtherPacket));
+    //memset(packet,0,sizeof(EtherPacket));
+    memset(packet,0,sizeof(packetSize));
 
     /* [memo]   uint8_t     不要        *
      *          uint16_t    htons();    *
@@ -260,7 +266,10 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 /************************
  * Print packet content *
  ************************/
-void printPacket(EtherPacket *packet, ssize_t packetSize, char *message)
+/*
+//void printPacket(EtherPacket *packet, ssize_t packetSize, char *message)
+void printPacket(Header *packet, ssize_t packetSize, char *message)
+
 {
 #ifdef VLAN     // show vlan ID
     printf("%s #%s (VLAN %d) from %04x%04x to %04x%04x\n",
@@ -274,15 +283,15 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message)
             ntohs(packet->destMAC1), ntohl(packet->destMAC2));
 #endif
 }
-
+*/
 
 
 /*****************************
  * Send packets to terminals *
  *****************************/
-void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-        uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
-        int32_t *count)
+void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2, uint16_t DestMAC1,
+        uint32_t DestMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t *count)
+        //uint32_t DestMAC2, uint32_t vlanTag, uint16_t type, int32_t *count)
 {
     int32_t i;
     unsigned char packet[MAX_PACKET_SIZE];
@@ -293,13 +302,15 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
     sll.sll_protocol = htons(ETH_P_ALL);   // Ethernet type = Trans. Ether Bridging
     sll.sll_ifindex = ifindex;
 
-    ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+    //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+    ssize_t packetSize = createPacket((Header*)packet, DestMAC1, DestMAC2,
             SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
 
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,
             (struct sockaddr *)&sll, sizeof(sll));
 
-    printPacket((EtherPacket*)packet, packetSize, "Sent:    ");
+    //printPacket((EtherPacket*)packet, packetSize, "Sent:    ");
+    printPacket((Header*)packet, packetSize, "Sent:    ");
     if (sizeout < 0) {
         perror("sendto");
     } else {
@@ -316,7 +327,8 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
  * The terms of sending  packets *
  *********************************/
 void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-        uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
+        uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type, int32_t pValue) 
+        //uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
 {
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t sendCount = 0;
@@ -331,8 +343,8 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             int32_t currTime = time(NULL);
             if (currTime - lastTime >= Period) {
                 if (DEBUG) printf("currTime=%d lastTime=%d\n", currTime, (int32_t)lastTime);
-                sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type,
-                        &sendCount);
+                sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type, pValue, &sendCount);
+                //sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type, &sendCount);
                 lastTime = currTime;
             }
         }
@@ -395,5 +407,6 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         //fcntl(fd, F_SETFL, O_NONBLOCK | flags);
 
         // ifindex ??
-        sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp);
+        //sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp);
+        sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp, pValue);
     }
