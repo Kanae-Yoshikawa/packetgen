@@ -97,6 +97,10 @@ struct _L2L3L4Header {
 //typedef struct _EtherHeader EtherPacket;
 typedef struct _L2L3L4Header Header;
 
+typedef struct {
+    struct Header;
+    unsigned char payload[pValue];
+} Packet;
 
 /* ここを変える */
 /* (ethernet frame type)    /usr/include/net/ethernet.h  */
@@ -202,7 +206,7 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 ssize_t createPacket(Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t payload)
-        //uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
+//uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 {
     //ssize_t packetSize = sizeof(EtherPacket);
     ssize_t packetSize = sizeof(Header) + sizeof(pValue);
@@ -272,18 +276,18 @@ void printPacket(Header *packet, ssize_t packetSize, char *message)
 
 {
 #ifdef VLAN     // show vlan ID
-    printf("%s #%s (VLAN %d) from %04x%04x to %04x%04x\n",
-            message, packet->payload, ntohl(packet->VLANTag) & 0xFFF
-            ,ntohs(packet->srcMAC1), ntohl(packet->srcMAC2),
-            ntohs(packet->destMAC1), ntohl(packet->destMAC2));
+printf("%s #%s (VLAN %d) from %04x%04x to %04x%04x\n",
+message, packet->payload, ntohl(packet->VLANTag) & 0xFFF
+,ntohs(packet->srcMAC1), ntohl(packet->srcMAC2),
+ntohs(packet->destMAC1), ntohl(packet->destMAC2));
 #else
-    printf("%s #%s from %04x%04x to %04x%04x\n",
-            message, packet->payload,
-            ntohs(packet->srcMAC1), ntohl(packet->srcMAC2),
-            ntohs(packet->destMAC1), ntohl(packet->destMAC2));
+printf("%s #%s from %04x%04x to %04x%04x\n",
+message, packet->payload,
+ntohs(packet->srcMAC1), ntohl(packet->srcMAC2),
+ntohs(packet->destMAC1), ntohl(packet->destMAC2));
 #endif
 }
-*/
+ */
 
 
 /*****************************
@@ -291,15 +295,10 @@ void printPacket(Header *packet, ssize_t packetSize, char *message)
  *****************************/
 void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2, uint16_t DestMAC1,
         uint32_t DestMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t *count)
-        //uint32_t DestMAC2, uint32_t vlanTag, uint16_t type, int32_t *count)
+//uint32_t DestMAC2, uint32_t vlanTag, uint16_t type, int32_t *count)
 {
     int32_t i;
     //unsigned char packet[MAX_PACKET_SIZE];
-    typedef struct {
-    struct Header;
-    unsigned char payload[pValue];
-    } Packet;
-    
 
     struct sockaddr_ll sll;
     memset(&sll, 0, sizeof(sll));
@@ -334,7 +333,7 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
  *********************************/
 void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type, int32_t pValue) 
-        //uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
+//uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
 {
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t sendCount = 0;
@@ -355,7 +354,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             }
         }
     }
-} // vimのインデント修正でずれる．なぜ？
+    } // vimのインデント修正でずれる．なぜ？
 
 
 
@@ -369,7 +368,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         int32_t destTermNum = 1;    //MAC2{}の何要素目か
         int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
         uint16_t vlanID = 173;      //vlanIDを指定
-        
+
         /* add getopt() */
         // とりあえず，payloadだけやってみる
         int opt;
@@ -382,7 +381,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
                     break;
                 default:    // '?'
                     fprintf(stderr, "Usage: %s [-p payload value]\n", argv[0]);
-                     exit(EXIT_FAILURE);
+                    exit(EXIT_FAILURE);
             }
         }
         // ここの処理よくわからん
