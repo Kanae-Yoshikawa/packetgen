@@ -99,7 +99,6 @@ typedef struct _EtherHeader EtherPacket;
 /* ここを変える */
 /* (ethernet frame type)    /usr/include/net/ethernet.h  */
 #define ETH_P_Exp   0x0800          // Ethernet type = IP
-//#define ETH_P_Exp   0x8100        // Ethernet type = IEEE 802.1Q VLAN tagging 
 //#define ETH_P_Exp   0x86dd        // Ethernet type = IPv6
 //#define ETH_P_Exp   0x0806        // Ethernet type = ARP  address resolution
 //#define ETH_P_Exp   0x88b5        // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
@@ -201,14 +200,13 @@ int32_t open_socket(int32_t index, int32_t *rifindex) {
  * Create an IPEC packet
  */
 
-
-//original
-ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
-       int32_t payload) {
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-//        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
-//        int32_t payload) {
+//        uint16_t srcMAC1, uint32_t srcMAC2, uint16_t type, uint32_t vlanTag,
+//       int32_t payload) {
+ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
+        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type,
+        int32_t payload)
+{
 
 
 
@@ -301,13 +299,13 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
  /*****************************
   * Send packets to terminals *
   *****************************/
- //original
- void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-     uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
-     int32_t *count) {
  //void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
- //    uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
+ //    uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
  //    int32_t *count) {
+ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+     uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
+     int32_t *count)
+{
 
 
      int32_t i;
@@ -320,11 +318,10 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
      sll.sll_protocol = htons(ETH_P_ALL);   // Ethernet type = Trans. Ether Bridging
      sll.sll_ifindex = ifindex;
 
-     //original
-     ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-           SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
      //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-     //        SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
+     //      SrcMAC1, SrcMAC2, type, vlanTag, (*count)++);
+     ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
+             SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
 
      ssize_t sizeout = sendto(fd, packet, packetSize, 0,
              (struct sockaddr *)&sll, sizeof(sll));
@@ -340,8 +337,11 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
      }
  }
 
+//void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+//        uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint16_t vlanID) {
 void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
-        uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint16_t vlanID) {
+        uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
+{
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t sendCount = 0;
     //int32_t receiveCount = 0;
@@ -357,7 +357,9 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             int32_t currTime = time(NULL);
             if (currTime - lastTime >= Period) {
                 if (DEBUG) printf("currTime=%d lastTime=%d\n", currTime, (int32_t)lastTime);
-                sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, type, vlanTag,
+                //sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, type, vlanTag,
+                //        &sendCount);
+                sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type,
                         &sendCount);
                 lastTime = currTime;
             }
@@ -447,10 +449,11 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
     int32_t fd = open_socket(ifnum, &ifindex);
 
     // Set non-blocking mode: receiveとsendができるように
-    int32_t flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, O_NONBLOCK | flags);
+    //int32_t flags = fcntl(fd, F_GETFL, 0);
+    //fcntl(fd, F_SETFL, O_NONBLOCK | flags);
 
-    // ifindex??
+    // ifindex ??
     //sendReceive(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
-    sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
+    //sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
+    sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp);
 }
