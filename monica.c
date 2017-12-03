@@ -31,10 +31,10 @@
 #include <time.h>               // time(),
 #include <inttypes.h>           // uint16_t -> PRIu16,  //追加
 #include <net/ethernet.h>       // L2 protocol          //追加
-
+#include <unistd.h>             // getopt()
 
 #define DEBUG       1
-#define MAX_PACKET_SIZE 2048    // Sufficiently larger than the MTU
+#define MAX_PACKET_SIZE 2048    // Sufficiently larger than the MTU(1518byte)
 #define Period      1
 
 /* ここを変える */
@@ -89,7 +89,7 @@ struct _EtherHeader {
     //uint?_t   option;
 #endif
 
-    char payload[100];
+    char payload[optarg];
 
 } __attribute__((packed));
 
@@ -253,7 +253,7 @@ ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
     sprintf(packet->payload, "hello world");
     return packetSize;
 }
-int32_t lastPayload = -1;
+//int32_t lastPayload = -1;
 
 
 
@@ -320,10 +320,8 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 {
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t sendCount = 0;
-    //int32_t receiveCount = 0;
     time_t lastTime = time(NULL);
     int32_t replyDelay = 0;
-    //int32_t i;
     uint32_t vlanTag = 0x81000000 | vlanID;
 
     // Sending packets:
@@ -333,8 +331,6 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             int32_t currTime = time(NULL);
             if (currTime - lastTime >= Period) {
                 if (DEBUG) printf("currTime=%d lastTime=%d\n", currTime, (int32_t)lastTime);
-                //sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, type, vlanTag,
-                //        &sendCount);
                 sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type,
                         &sendCount);
                 lastTime = currTime;
@@ -355,6 +351,29 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         int32_t destTermNum = 1;    //MAC2{}の何要素目か
         int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
         uint16_t vlanID = 173;      //vlanIDを指定
+        
+        /* add getopt() */
+        // とりあえず，payloadだけやってみる
+        int opt;
+        int p = 0, pVlue = 0;
+        while((opt = getopt(argc, argv, "p:")) != -1){
+            switch (opt) {
+                case 'p':
+                    pValue = atoi(optarg);      //文字列を int 型に変換
+                    p = 1;
+                    break;
+                default:    // '?'
+                    fprintf(stderr, "Usage: %s [-p payload value]\n", argv[0]);
+                     exit(EXIT_FAILURE);
+            }
+        }
+        // ここの処理よくわからん
+        if (optind >= argc) {
+            fprintf(stderr, "Expected argument after options\n");
+            exit(EXIT_FAILURE);
+        }
+
+
 
         // Set locators and IDs using terminal number:
         uint16_t SrcMAC1  = MAC1[myTermNum];
