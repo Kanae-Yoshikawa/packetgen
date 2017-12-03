@@ -43,6 +43,8 @@
 #define UDP     YES
 //#define TCP    YES
 
+int pValue = 0;
+
 
 //struct _EtherHeader {
 struct _L2L3L4Header {
@@ -90,17 +92,20 @@ struct _L2L3L4Header {
     //uint?_t   option;
 #endif
 
-    //char payload[pValue];
+    char payload[pValue];
 
 } __attribute__((packed));
 
 //typedef struct _EtherHeader EtherPacket;
 typedef struct _L2L3L4Header Header;
 
-typedef struct {
-    struct Header;
-    unsigned char payload[pValue];
-} Packet;
+//typedef struct {
+//    struct Header;
+//    unsigned char payload[pValue];
+//} Packet;
+
+
+
 
 /* ここを変える */
 /* (ethernet frame type)    /usr/include/net/ethernet.h  */
@@ -204,12 +209,12 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
  * Create packet *
  *****************/
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-ssize_t createPacket(Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
+ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t payload)
 //uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 {
     //ssize_t packetSize = sizeof(EtherPacket);
-    ssize_t packetSize = sizeof(Header) + sizeof(pValue);
+    ssize_t packetSize = sizeof(Header);
 
     //memset(packet,0,sizeof(EtherPacket));
     memset(packet,0,sizeof(packetSize));
@@ -307,7 +312,7 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
     sll.sll_ifindex = ifindex;
 
     //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-    ssize_t packetSize = createPacket((Packet*)packet, DestMAC1, DestMAC2,
+    ssize_t packetSize = createPacket((Header*)packet, DestMAC1, DestMAC2,
             SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
 
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,
@@ -372,7 +377,8 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         /* add getopt() */
         // とりあえず，payloadだけやってみる
         int opt;
-        int p = 0, pValue = 0;
+        int p = 0;
+        //int pValue = 0;
         while((opt = getopt(argc, argv, "p:")) != -1){
             switch (opt) {
                 case 'p':
