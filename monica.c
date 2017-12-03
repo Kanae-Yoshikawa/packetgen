@@ -36,7 +36,6 @@
 #define DEBUG       1
 #define MAX_PACKET_SIZE 2048    // Sufficiently larger than the MTU
 #define Period      1
-//enum commMode {SendAndReceive = 0, ReceiveThenSend = 1};　// 使ってない? 列挙体p.191
 
 /* ここを変える */
 #define VLAN    YES
@@ -91,27 +90,20 @@ struct _EtherHeader {
 #endif
 
     char payload[100];
+
 } __attribute__((packed));
 
 typedef struct _EtherHeader EtherPacket;
 
 
-
-
-/*****
- * [ ethernet frame type ]
- * /usr/include/net/ethernet.h
- *****/
-
 /* ここを変える */
+/* (ethernet frame type)    /usr/include/net/ethernet.h  */
 #define ETH_P_Exp   0x0800          // Ethernet type = IP
 //#define ETH_P_Exp   0x8100        // Ethernet type = IEEE 802.1Q VLAN tagging 
 //#define ETH_P_Exp   0x86dd        // Ethernet type = IPv6
 //#define ETH_P_Exp   0x0806        // Ethernet type = ARP  address resolution
 //#define ETH_P_Exp   0x88b5        // Ethernet type = IEEE 802.1 Local Experimental Ethertype 1
                                     // 88b5はinterface cardによって使用不可
-
-
 
 #define InitialReplyDelay   40      // これ何???
 #define MaxCommCount        9999    // sendとreceiveのtotal上限回数
@@ -120,19 +112,22 @@ typedef struct _EtherHeader EtherPacket;
 //extern void _exit(int32_t);       //プロトタイプ宣言．外部関数参照
 
 
-/***
- * MAC addressを指定. MAC1とMAC2で前後を分離. 16進数「0x」付け忘れ注意
- * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]とMAC2[0]を直結
- ***/
+
+
+
+/**************************************************************************
+ * MAC addressを指定. MAC1とMAC2で前後を分離. 16進数「0x」付け忘れ注意    *
+ * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]MAC2[0]*
+**************************************************************************/
 #define NTerminals  4               // 指定できるMAC address数
 uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0200, 0x0200};
 uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c2f, 0x00000003, 0x00000004};
 
 
 
-/*****
- * Open a socket for the network interface
- *****/
+/*******************************************
+ * Open a socket for the network interface *
+ *******************************************/
 int32_t open_socket(int32_t index, int32_t *rifindex) {
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t i;
@@ -303,9 +298,9 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
  }
 
 
- /**
-  * Send packets to terminals
-  */
+ /*****************************
+  * Send packets to terminals *
+  *****************************/
  //original
  void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
      uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint32_t vlanTag,
@@ -345,18 +340,19 @@ void printPacket(EtherPacket *packet, ssize_t packetSize, char *message) {
      }
  }
 
-void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
+void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         uint16_t DestMAC1, uint32_t DestMAC2, uint16_t type, uint16_t vlanID) {
     unsigned char buf[MAX_PACKET_SIZE];
     int32_t sendCount = 0;
-    int32_t receiveCount = 0;
+    //int32_t receiveCount = 0;
     time_t lastTime = time(NULL);
     int32_t replyDelay = 0;
-    int32_t i;
+    //int32_t i;
     uint32_t vlanTag = 0x81000000 | vlanID;
 
-    // Sending and receiving packets:
-    for (; sendCount < MaxCommCount && receiveCount < MaxCommCount;) {
+    // Sending packets:
+    for (; sendCount < MaxCommCount ;) {
+    //for (; sendCount < MaxCommCount && receiveCount < MaxCommCount;) {
         if (DestMAC2 != 0 && replyDelay <= 0) {
             int32_t currTime = time(NULL);
             if (currTime - lastTime >= Period) {
@@ -366,6 +362,8 @@ void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
                 lastTime = currTime;
             }
         }
+    // Receiving packets:
+      /*  
         ssize_t sizein = recv(fd, buf, MAX_PACKET_SIZE, 0);
         if (sizein >= 0) {
             EtherPacket *packet = (EtherPacket*) buf;
@@ -381,6 +379,7 @@ void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
         } else {
             usleep(10000); // sleep for 10 ms
         }
+    */
     }
 }
 
@@ -388,7 +387,8 @@ void sendReceive(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
 /****************
  * Main program *
  ****************/
-int32_t main(int32_t argc, char **argv) {      // **argv = *argv[]
+int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
+{
     int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
     int32_t myTermNum = 0;      //MAC1{}の何要素目か
     int32_t destTermNum = 1;    //MAC2{}の何要素目か
@@ -400,7 +400,7 @@ int32_t main(int32_t argc, char **argv) {      // **argv = *argv[]
     // Get terminal and interface numbers（<-とは？） from the command line
     // 実行時に引数で渡す
     // int32_t count = 0; (original) createPacketと変数名重複するから変更した
-    int32_t counter = 0;
+/*    int32_t counter = 0;
     if (++counter < argc) {
         myTermNum = atoi(argv[counter]);      // My terminal number
     }
@@ -429,7 +429,7 @@ int32_t main(int32_t argc, char **argv) {      // **argv = *argv[]
         printf("%"PRIu16"\n", vlanID);     // 書き足した．header fileもincludeに足した
         vlanID = 1;
     }
-
+*/
 
     // Set locators and IDs using terminal number:
     uint16_t SrcMAC1  = MAC1[myTermNum];
@@ -451,5 +451,6 @@ int32_t main(int32_t argc, char **argv) {      // **argv = *argv[]
     fcntl(fd, F_SETFL, O_NONBLOCK | flags);
 
     // ifindex??
-    sendReceive(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
+    //sendReceive(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
+    sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, ETH_P_Exp, vlanID);
 }
