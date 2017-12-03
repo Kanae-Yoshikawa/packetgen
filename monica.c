@@ -89,7 +89,7 @@ struct _EtherHeader {
     //uint?_t   option;
 #endif
 
-    char payload[optarg];
+    char payload[pValue];
 
 } __attribute__((packed));
 
@@ -355,7 +355,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         /* add getopt() */
         // とりあえず，payloadだけやってみる
         int opt;
-        int p = 0, pVlue = 0;
+        int p = 0, pValue = 0;
         while((opt = getopt(argc, argv, "p:")) != -1){
             switch (opt) {
                 case 'p':
