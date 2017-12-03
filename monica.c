@@ -310,7 +310,8 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
             (struct sockaddr *)&sll, sizeof(sll));
 
     //printPacket((EtherPacket*)packet, packetSize, "Sent:    ");
-    printPacket((Header*)packet, packetSize, "Sent:    ");
+    //ややこしいからコメントアウト　あとでもどす
+    /*printPacket((Header*)packet, packetSize, "Sent:    "); */
     if (sizeout < 0) {
         perror("sendto");
     } else {
