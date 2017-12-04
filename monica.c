@@ -102,7 +102,7 @@ struct _L2L3L4Header {
 struct  Packet{
     struct _L2L3L4Header Header;        // ここで用いる構造体は既に定義済みのもの．それをrename する
     //unsigned char payload[pValue];
-    unsigned char *buf = NULL;
+    unsigned char *buf;
 }
 
 
@@ -396,6 +396,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             exit(EXIT_FAILURE);
         }
 
+        unsigned char *buf = NULL;
         buf = malloc(*pValue);
         if(buf == NULL){
         printf("malloc error")
