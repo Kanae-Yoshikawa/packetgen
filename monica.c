@@ -43,10 +43,6 @@
 #define UDP     YES
 //#define TCP    YES
 
-int pValue = 0;
-
-
-//struct _EtherHeader {
 struct _L2L3L4Header {
     uint16_t destMAC1;
     uint32_t destMAC2;
