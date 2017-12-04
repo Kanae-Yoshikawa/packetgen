@@ -209,12 +209,13 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
  * Create packet *
  *****************/
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
-ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
+//ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
+ssize_t createPacket(struct Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t payload)
 //uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 {
     //ssize_t packetSize = sizeof(EtherPacket);
-    ssize_t packetSize = sizeof(Header);
+    ssize_t packetSize = sizeof(Packet);
 
     //memset(packet,0,sizeof(EtherPacket));
     memset(packet,0,sizeof(packetSize));
@@ -312,7 +313,7 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
     sll.sll_ifindex = ifindex;
 
     //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-    ssize_t packetSize = createPacket((Header*)packet, DestMAC1, DestMAC2,
+    ssize_t packetSize = createPacket((struct Packet*)packet, DestMAC1, DestMAC2,
             SrcMAC1, SrcMAC2, vlanTag, type, pValue,  (*count)++);
 
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,
@@ -397,9 +398,9 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         }
 
         unsigned char *buf = NULL;
-        buf = malloc(*pValue);
+        buf = malloc(sizeof(unsigned char)*pValue);
         if(buf == NULL){
-        printf("malloc error")
+       printf("malloc error");
         }
 
         // Set locators and IDs using terminal number:
