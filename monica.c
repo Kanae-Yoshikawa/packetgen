@@ -313,7 +313,7 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
 
     //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
     ssize_t packetSize = createPacket((Header*)packet, DestMAC1, DestMAC2,
-            SrcMAC1, SrcMAC2, vlanTag, type,  (*count)++);
+            SrcMAC1, SrcMAC2, vlanTag, type, pValue,  (*count)++);
 
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,
             (struct sockaddr *)&sll, sizeof(sll));
