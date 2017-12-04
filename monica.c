@@ -88,18 +88,14 @@ struct _L2L3L4Header {
     //uint?_t   option;
 #endif
 
-   // char payload[pValue];
-
 } __attribute__((packed));
-
-//typedef struct _EtherHeader EtherPacket;
-//typedef struct _L2L3L4Header Header;
 
 struct  Packet{
     struct _L2L3L4Header Header;        // ここで用いる構造体は既に定義済みのもの．それをrename する
-    //unsigned char payload[pValue];
     unsigned char *buf;
 };
+typedef struct Packet Packet;
+
 
 
 
@@ -206,7 +202,7 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
  *****************/
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 //ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
-ssize_t createPacket(struct Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
+ssize_t createPacket(Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
         uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue, int32_t payload)
 //uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 {
@@ -219,46 +215,46 @@ ssize_t createPacket(struct Packet *packet, uint16_t destMAC1, uint32_t destMAC2
     /* [memo]   uint8_t     不要        *
      *          uint16_t    htons();    *
      *          uint32_t    htonl();    */
-    packet->destMAC1 = htons(destMAC1);
-    packet->destMAC2 = htonl(destMAC2);
-    packet->srcMAC1 = htons(srcMAC1);
-    packet->srcMAC2 = htonl(srcMAC2);
+   packet->Header.destMAC1 = htons(destMAC1);
+    packet->Header.destMAC2 = htonl(destMAC2);
+    packet->Header.srcMAC1 = htons(srcMAC1);
+    packet->Header.srcMAC2 = htonl(srcMAC2);
 
 #ifdef VLAN
-    packet->VLANTag = htonl(vlanTag);
+    packet->Header.VLANTag = htonl(vlanTag);
 #endif
 
-    packet->type = htons(type);
+    packet->Header.type = htons(type);
 
 #ifdef IPv4
-    packet->VerLen    = 0x45;
-    packet->tos       = 0x00;
-    packet->totalLen  = htons(0x0080);    //error;IPv4 total lentgh exceeds packet length 32byte
-    packet->Identify  = htons(0xddf2);
-    packet->flag      = htons(0x4000);
-    packet->TTL       = 0x40;
-    packet->protocol  = 0x06;                 //UDPなら11，TCPなら06
-    packet->IpChecksum= htons(0xcf79);
-    packet->srcIP     = htonl(0x0a3a3c45);
-    packet->dstIP     = htonl(0x0a3a3c48);
+    packet->Header.VerLen    = 0x45;
+    packet->Header.tos       = 0x00;
+    packet->Header.totalLen  = htons(0x0080);    //error;IPv4 total lentgh exceeds packet length 32byte
+    packet->Header.Identify  = htons(0xddf2);
+    packet->Header.flag      = htons(0x4000);
+    packet->Header.TTL       = 0x40;
+    packet->Header.protocol  = 0x06;                 //UDPなら11，TCPなら06
+    packet->Header.IpChecksum= htons(0xcf79);
+    packet->Header.srcIP     = htonl(0x0a3a3c45);
+    packet->Header.dstIP     = htonl(0x0a3a3c48);
 #endif
 
 #ifdef UDP      //#ifdef IPv4 の packet->protocol を11に書き換えること
-    packet->srcPort     = htons(0x0000);      //source port
-    packet->dstPort     = htons(0x2710);      //destination port
-    packet->len         = htons(0x006c);      //UDP len
-    packet->UdpChecksum = htons(0x0000);      //UDP checksum
+    packet->Header.srcPort     = htons(0x0000);      //source port
+    packet->Header.dstPort     = htons(0x2710);      //destination port
+    packet->Header.len         = htons(0x006c);      //UDP len
+    packet->Header.UdpChecksum = htons(0x0000);      //UDP checksum
 #endif
 
 #ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
-    packet->srcPort        = htons(0x2710);           //source port
-    packet->dstPort        = htons(0x2710);           //destination port
-    packet->seqNumber      = htonl(0x00000001);       //sequence number
-    packet->ackNumber      = htonl(0x00000002);       //acknowkedgement number
-    packet->offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
-    packet->windowSize     = htons(0x002d);           //window size
-    packet->TcpChecksum    = htons(0x0000);           //checksum
-    packet->urgentPointer  = htons(0x0000);           //urgent pointer 
+    packet->Header.srcPort        = htons(0x2710);           //source port
+    packet->Header.dstPort        = htons(0x2710);           //destination port
+    packet->Header.seqNumber      = htonl(0x00000001);       //sequence number
+    packet->Header.ackNumber      = htonl(0x00000002);       //acknowkedgement number
+    packet->Header.offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
+    packet->Header.windowSize     = htons(0x002d);           //window size
+    packet->Header.TcpChecksum    = htons(0x0000);           //checksum
+    packet->Header.urgentPointer  = htons(0x0000);           //urgent pointer 
     //packet-> = hton?();     //option
 #endif
 
@@ -309,7 +305,7 @@ void sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2
     sll.sll_ifindex = ifindex;
 
     //ssize_t packetSize = createPacket((EtherPacket*)packet, DestMAC1, DestMAC2,
-    ssize_t packetSize = createPacket((struct Packet*)packet, DestMAC1, DestMAC2,
+    ssize_t packetSize = createPacket((Packet*)packet, DestMAC1, DestMAC2,
             SrcMAC1, SrcMAC2, vlanTag, type, pValue,  (*count)++);
 
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,
@@ -375,7 +371,7 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         // とりあえず，payloadだけやってみる
         int opt;
         int p = 0;
-        //int pValue = 0;
+        int pValue = 0;
         while((opt = getopt(argc, argv, "p:")) != -1){
             switch (opt) {
                 case 'p':
@@ -419,6 +415,5 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         //fcntl(fd, F_SETFL, O_NONBLOCK | flags);
 
         // ifindex ??
-        //sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp);
         sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp, pValue);
     }
