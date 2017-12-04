@@ -92,18 +92,18 @@ struct _L2L3L4Header {
     //uint?_t   option;
 #endif
 
-    char payload[pValue];
+   // char payload[pValue];
 
 } __attribute__((packed));
 
 //typedef struct _EtherHeader EtherPacket;
-typedef struct _L2L3L4Header Header;
+//typedef struct _L2L3L4Header Header;
 
-//typedef struct {
-//    struct Header;
-//    unsigned char payload[pValue];
-//} Packet;
-
+struct  Packet{
+    struct _L2L3L4Header Header;        // ここで用いる構造体は既に定義済みのもの．それをrename する
+    //unsigned char payload[pValue];
+    unsigned char *buf = NULL;
+}
 
 
 
@@ -396,7 +396,10 @@ void sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             exit(EXIT_FAILURE);
         }
 
-
+        buf = malloc(*pValue);
+        if(buf == NULL){
+        printf("malloc error")
+        }
 
         // Set locators and IDs using terminal number:
         uint16_t SrcMAC1  = MAC1[myTermNum];
