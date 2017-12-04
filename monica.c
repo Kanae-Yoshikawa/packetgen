@@ -103,7 +103,7 @@ struct  Packet{
     struct _L2L3L4Header Header;        // ここで用いる構造体は既に定義済みのもの．それをrename する
     //unsigned char payload[pValue];
     unsigned char *buf;
-}
+};
 
 
 
