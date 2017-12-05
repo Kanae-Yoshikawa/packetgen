@@ -212,9 +212,10 @@ ssize_t createPacket(Packet *packet, uint16_t destMAC1, uint32_t destMAC2,
     //memset(packet,0,sizeof(EtherPacket));
     memset(packet,0,sizeof(packetSize));
 
-    /* [memo]   uint8_t     不要        *
-     *          uint16_t    htons();    *
-     *          uint32_t    htonl();    */
+    /* [memo]   uint8_t     不要                        *
+     *          uint16_t    htons();                    *
+     *          uint32_t    htonl();                    *
+     * 構造体変数[．]メンバ,    　　pointer[->]メンバ   */
    packet->Header.destMAC1 = htons(destMAC1);
     packet->Header.destMAC2 = htonl(destMAC2);
     packet->Header.srcMAC1 = htons(srcMAC1);
