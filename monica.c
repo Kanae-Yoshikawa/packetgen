@@ -198,78 +198,107 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
 
 
 /*****************
- * Create packet *
+ * Create header *
  *****************/
 //ssize_t createPacket(EtherPacket *packet, uint16_t destMAC1, uint32_t destMAC2,
 //ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
+//          uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 ssize_t createHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, uint32_t destMAC2,
-		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type)
-		//pValue 
-	//uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
+		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue)
 {
-	Packet *packet = (Packet *)buf;
+	Packet *packet = (Packet *)buf;     //(Packet *)にキャスト
 	//ssize_t packetSize = sizeof(EtherPacket);
 	ssize_t headerSize = 0;
-	printf("top of createHeader\n");
-	headerSize = sizeof(Packet) - sizeof(unsigned char *); //error??? 	
+	//printf("top of createHeader\n");
+	headerSize = sizeof(Packet) - sizeof(unsigned char *); //errorかも?? -> error 回避sampleみろ
 	if(headerSize > bufsize)
 		return (-1);    
-	//memset(packet,0,sizeof(EtherPacket));
 
 	/* [memo]   uint8_t     不要                        *
 	 *          uint16_t    htons();                    *
 	 *          uint32_t    htonl();                    *
 	 * 構造体変数[．]メンバ,    　　pointer[->]メンバ   */
 	packet->Header.destMAC1 = htons(destMAC1);
-	//headerSize += sizeof(packet->Header.destMAC1);  //sample
+//	    headerSize += sizeof(packet->Header.destMAC1);  //error 回避sample
 	packet->Header.destMAC2 = htonl(destMAC2);
+//	    headerSize += sizeof(packet->Header.destMAC2);
 	packet->Header.srcMAC1 = htons(srcMAC1);
+//	    headerSize += sizeof(packet->Header.srcMAC1);
 	packet->Header.srcMAC2 = htonl(srcMAC2);
+//	    headerSize += sizeof(packet->Header.);
 
 #ifdef VLAN
 	packet->Header.VLANTag = htonl(vlanTag);
+//	    headerSize += sizeof(packet->Header.);
 #endif
 
 	packet->Header.type = htons(type);
+//	    headerSize += sizeof(packet->Header.);
 
 #ifdef IPv4
 	packet->Header.VerLen    = 0x45;
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.tos       = 0x00;
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.totalLen  = htons(0x0080);    //error;IPv4 total lentgh exceeds packet length 32byte
+//	    headerSize += sizeof(packet->Header.);
 							//pValue + UDP/TCP + IP header
 	packet->Header.Identify  = htons(0xddf2);
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.flag      = htons(0x4000);
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.TTL       = 0x40;
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.protocol  = 0x11;                 //UDPなら11，TCPなら06
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.IpChecksum= htons(0xcf79);
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.srcIP     = htonl(0x0a3a3c45);
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.dstIP     = htonl(0x0a3a3c48);
+//	    headerSize += sizeof(packet->Header.);
 #endif
 
 #ifdef UDP      //#ifdef IPv4 の packet->protocol を11に書き換えること
 	packet->Header.srcPort     = htons(0x0000);      //source port
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.dstPort     = htons(0x2710);      //destination port
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.len         = htons(0x006c);      //UDP len　//pValue + UDP header
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.UdpChecksum = htons(0x0000);      //UDP checksum
+//	    headerSize += sizeof(packet->Header.);
 #endif
 
 #ifdef TCP      //#ifdef IPv4 の packet->protocol を16に書き換えること
 	packet->Header.srcPort        = htons(0x2710);           //source port
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.dstPort        = htons(0x2710);           //destination port
-	packet->Header.seqNumber      = htonl(0x00000001);       //sequence number
-	packet->Header.ackNumber      = htonl(0x00000002);       //acknowkedgement number
-	packet->Header.offsetReservCtl= htons(0x8011);           //data offset, resrved, ctl flag
-	packet->Header.windowSize     = htons(0x002d);           //window size
+//	    headerSize += sizeof(packet->Header.);
+	packet->Header.seqNumber      = htonl(0x00000001);       //sequence number 
+//	    headerSize += sizeof(packet->Header.);                  //connection張らないから1でいい？
+	packet->Header.ackNumber      = htonl(0x00000002);       //相手から受信したシーケンス番号+ data size
+//	    headerSize += sizeof(packet->Header.);
+	packet->Header.offsetReservCtl= htons(0x8011);           //data offset(4),TCPヘッダの長さ
+//	    headerSize += sizeof(packet->Header.);               //resrved(6),全bit 0. 将来の拡張のため
+                                                             //ctl flag(6),URG/ACK/PSH/RST/SYN/FIN
+	packet->Header.windowSize     = htons(0x002d);           //受信側が一度に受信可能なdata量を送信側に通知
+//	    headerSize += sizeof(packet->Header.);
 	packet->Header.TcpChecksum    = htons(0x0000);           //checksum
-	packet->Header.urgentPointer  = htons(0x0000);           //urgent pointer 
-	//packet-> = hton?();     //option
+//	    headerSize += sizeof(packet->Header.);
+	packet->Header.urgentPointer  = htons(0x0000);           //ctl flagのURGの値が「1」である場合にのみ使用
+//	    headerSize += sizeof(packet->Header.);
+	//packet->Header. ? = hton?(?);     //option
+//	    headerSize += sizeof(packet->Header.);
 #endif
 
 	return headerSize;
 }
 //int32_t lastPayload = -1;
 
-
+/******************
+ * Create payload *
+ ******************/
 ssize_t createPayload(unsigned char * buf, ssize_t payloadBuf, int32_t pValue, int32_t count)
 {
 	//Packet *packet = (Packet *)buf;
@@ -332,7 +361,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 	//ssize_t createHeader(char *buf, ssize_t bufsize, uint16_t destMAC1, uint32_t destMAC2,
 	//        uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type)
 	ssize_t headerSize = createHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
-			SrcMAC1, SrcMAC2, vlanTag, type);
+			SrcMAC1, SrcMAC2, vlanTag, type, pValue);
 	if(headerSize == -1){
 		printf("hederSize\n");
 		return (-1);			
@@ -374,24 +403,21 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 		uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type, int32_t pValue) 
 	//uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type) 
 {
-	//unsigned char buf[MAX_PACKET_SIZE];
 	int32_t sendCount = 0;
 	time_t lastTime = time(NULL);
 	int32_t replyDelay = 0;
 	uint32_t vlanTag = 0x81000000 | vlanID;
-	int ret = 0;
+	int ret = 0;                                //sendPacket()の返り値処理
 
 	// Sending packets:
 	for (; sendCount < MaxCommCount ;) {
-		//for (; sendCount < MaxCommCount && receiveCount < MaxCommCount;) {
 		if (DestMAC2 != 0 && replyDelay <= 0) {
 			int32_t currTime = time(NULL);
 			if (currTime - lastTime >= Period) {
 				if (DEBUG) printf("currTime=%d lastTime=%d\n", currTime, (int32_t)lastTime);
 				ret =  sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type, pValue, &sendCount);
-				//sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanTag, type, &sendCount);
 				if(ret < 0){
-					printf("sendPacket error");        
+					printf("sendPacket error");
 					return (-1);
 				}
 				lastTime = currTime;
@@ -413,12 +439,12 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 		int32_t destTermNum = 1;    //MAC2{}の何要素目か
 		int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
 		uint16_t vlanID = 173;      //vlanIDを指定
-		int ret = 0;
+		int ret = 0;                //sendTerms()の返り値処理
 
 		/* add getopt() */
 		// とりあえず，payloadだけやってみる
 		int opt;
-		int p = 0;
+		int p = 0;                  //なぜか変数未使用のwarningでる(?)
 		int pValue = 0;
 		while((opt = getopt(argc, argv, "p:")) != -1){
 			switch (opt) {
@@ -468,7 +494,7 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 		// ifindex ??
 		ret = sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp, pValue);
 		if(ret < 0){
-			printf("sendTerms\n");
+			printf("sendTerms error\n");
 			return (-1);
 		}
 
