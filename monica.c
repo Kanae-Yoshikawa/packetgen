@@ -51,7 +51,6 @@
 
 #define VLAN    YES
 //#define VLANflag 3				// 値に特に意味は無い  忘れずに上のdefineを消す！
-//#define PORTflag 4				// 値に特に意味は無い
 
 
 
@@ -237,7 +236,8 @@ int32_t open_socket(int32_t index, int32_t *rifindex)
 //ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
 //          uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 ssize_t createUdpHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, uint32_t destMAC2,
-		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue)
+		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, 
+		int32_t sValue, int32_t dValue, int32_t pValue)
 {
 	//Packet *packet = (Packet *)buf;     //(Packet *)にキャスト
 	UDP *packet = (UDP *)buf;             //(UDP *)にキャスト
@@ -288,8 +288,8 @@ ssize_t createUdpHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, 
 #endif
 
 	/*** UDP header ***/
-	packet->srcPort     = htons(49152);      //source port
-	packet->dstPort     = htons(49152);      //destination port
+	packet->srcPort     = htons(sValue);      //source port
+	packet->dstPort     = htons(dValue);      //destination port
 
 	/* UDP len計算 */
 	//pValue + UDP header(8byte)
@@ -310,7 +310,8 @@ ssize_t createUdpHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, 
 //ssize_t createPacket(Header *packet, uint16_t destMAC1, uint32_t destMAC2,
 //          uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t payload)
 ssize_t createTcpHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, uint32_t destMAC2,
-		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, int32_t pValue)
+		uint16_t srcMAC1, uint32_t srcMAC2, uint32_t vlanTag, uint16_t type, 
+		int32_t sValue, int32_t dValue, int32_t pValue)
 {
 	//Packet *packet = (Packet *)buf;   //(Packet *)にキャスト
 	TCP *packet = (TCP *)buf;           //(TCP *)にキャスト
@@ -355,8 +356,8 @@ ssize_t createTcpHeader(unsigned char *buf, ssize_t bufsize, uint16_t destMAC1, 
 #endif
 
 	/*** TCP header ***/
-	packet->srcPort        = htons(49152);           //source port
-	packet->dstPort        = htons(49152);           //destination port
+	packet->srcPort        = htons(sValue);           //source port
+	packet->dstPort        = htons(dValue);           //destination port
 
 	/* sequence number計算 */
 	//seq #＝seq #の初期値＋相手に送ったTCPデータのbyte数
@@ -429,9 +430,8 @@ ntohs(packet->destMAC1), ntohl(packet->destMAC2));
  *****************************/
 int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 		uint16_t DestMAC1, uint32_t DestMAC2, uint32_t vlanTag, uint16_t type,
-		int32_t L4flag, int32_t pValue, int32_t *count)
+		int32_t L4flag, int32_t sValue, int32_t dValue, int32_t pValue, int32_t *count)
 {
-	//int32_t i;
 	unsigned char packet[MAX_PACKET_SIZE];	
 	memset(packet,0, MAX_PACKET_SIZE);
 	unsigned char *address = NULL;   
@@ -450,7 +450,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 	if(L4flag == UDPflag){
 		// [memo] sizeof(packet) = sizeof(packet[0])
 		headerSize = createUdpHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
-				SrcMAC1, SrcMAC2, vlanTag, type, pValue);
+				SrcMAC1, SrcMAC2, vlanTag, type, sValue, dValue, pValue);
 		if(headerSize == -1){
 			printf("error: createUdpHeader at hederSize\n");
 			return (-1);
@@ -460,7 +460,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 	}else if(L4flag == TCPflag){
 		// [memo] sizeof(packet) = sizeof(packet[0])
 		headerSize = createTcpHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
-				SrcMAC1, SrcMAC2, vlanTag, type, pValue);
+				SrcMAC1, SrcMAC2, vlanTag, type, sValue, dValue, pValue);
 		if(headerSize == -1){
 			printf("error: createTCPHeader at hederSize\n");
 			return (-1);
@@ -505,7 +505,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
  *********************************/
 int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 		uint16_t DestMAC1, uint32_t DestMAC2, uint16_t vlanID, uint16_t type,
-		int32_t L4flag, int32_t pValue) 
+		int32_t L4flag, int32_t sValue, int32_t dValue, int32_t pValue) 
 {
 	int32_t sendCount = 0;
 	time_t lastTime = time(NULL);
@@ -520,7 +520,7 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 			if (currTime - lastTime >= Period) {
 				if (DEBUG) printf("currTime=%d lastTime=%d\n", currTime, (int32_t)lastTime);
 				ret =  sendPackets(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2,
-						vlanTag, type, L4flag, pValue, &sendCount);
+						vlanTag, type, L4flag, sValue, dValue, pValue, &sendCount);
 				if(ret < 0){
 					printf("sendPacket error\n");
 					return (-1);
@@ -550,23 +550,40 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
 	/* add getopt() */
 	// とりあえず，payloadだけやってみる
 	int opt;
-	int payload = 0;            //これだけなぜか変数未使用のwarningでる(?)
 	int L4flag = 0;
+	//int VLANflag = 0;
+	int srcPortNum = 0;
+	int sValue = 0;				//送信元port number
+	int destPortNum = 0;
+	int dValue = 0;				//宛先　port number
+	int payload = 0;            //これだけなぜか変数未使用のwarningでる(?)
 	int pValue = 0;
-	
-	while((opt = getopt(argc, argv, "utp:")) != -1){
+
+
+	/* 実行例；./fileName -u -s 49152 -d 49153 -p 100 
+	 * -> UDPで送信元port 49152から宛先port 49153 へpayload 100byte*/
+	while((opt = getopt(argc, argv, "uts:d:p:")) != -1){
 		switch (opt) {
-			case 'p':
-				pValue = atoi(optarg);      //文字列を int 型に変換
-				printf("pValue %d\n", pValue);
-				payload = 1;
-				break;
 			case 'u':
 				L4flag = UDPflag;
 				break;
 			case 't':
-				//tcp = 1;
 				L4flag = TCPflag;
+				break;
+			case 's':
+				sValue = atoi(optarg);      //文字列を int 型に変換
+				printf("sValue %d\n", sValue);
+				srcPortNum = 1;
+				break;
+			case 'd':
+				dValue = atoi(optarg);
+				printf("dValue %d\n", dValue);
+				destPortNum = 1;
+				break;
+			case 'p':
+				pValue = atoi(optarg);
+				printf("pValue %d\n", pValue);
+				payload = 1;
 				break;
 			default:    // '?'
 				fprintf(stderr, "Usage: %s [-p payload value]\n", argv[0]);
@@ -607,7 +624,8 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
 	//fcntl(fd, F_SETFL, O_NONBLOCK | flags);
 
 	// ifindex ??
-	ret = sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, ETH_P_Exp, L4flag, pValue);
+	ret = sendTerms(fd, ifindex, SrcMAC1, SrcMAC2, DestMAC1, DestMAC2, vlanID, 
+			ETH_P_Exp, L4flag, sValue, dValue, pValue);
 	if(ret < 0){
 		printf("sendTerms error\n");
 		return (-1);
