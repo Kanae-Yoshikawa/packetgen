@@ -272,6 +272,8 @@ ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValu
      * もしerrorする場合は　以下のerror回避sampleを参考にすること
      * headerSize += sizeof(packet->Header.destMAC1);
      * でも回避sampleの方式にするとbufsizeのif文が不成立になるから要編集 */
+printf("L3_L4headerSize %ld\n", L3_L4headerSize);
+printf("UDPbufsize%d\n", UDPbufsize);
 
     if(L3_L4headerSize > UDPbufsize){
         return (-1);
@@ -462,6 +464,8 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             return (-1);
         }
         payloadBuf = sizeof(packet) - L2headerSize;         //最大packetからL2header引いた値
+    printf("payloadBuf%d\n", payloadBuf);
+    printf("L2headerSize%d\n", L2headerSize);
         address = packet + L2headerSize;                    //address; ヘッダの終わりのアドレスを指す
     }
 
@@ -472,7 +476,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
            +-------+-------+-----------+----+------+-------+------------------+*/
 
         // [memo] sizeof(packet) = sizeof(packet[0])
-        L3_L4headerSize = createUdpHeader(address, sizeof(payloadBuf), sValue, dValue, pValue);
+        L3_L4headerSize = createUdpHeader(address, (int)payloadBuf, sValue, dValue, pValue);
         //L3_L4headerSize = createUdpHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
         //SrcMAC1, SrcMAC2, vlanTag, type, sValue, dValue, pValue);
         if(L3_L4headerSize == -1){
@@ -660,6 +664,5 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
         printf("sendTerms error\n");
         return (-1);
     }
-    printf("なんで？");
     return (0);
 }
