@@ -38,7 +38,7 @@
 #define UDPflag     1               // 値に特に意味は無い
 #define TCPflag     2               // 値に特に意味は無い
 
-#define EHTflag         1           // 値に特に意味は無い
+#define ETHflag         1           // 値に特に意味は無い
 #define ETH_VLANflag    2           // 値に特に意味は無い
 
 
@@ -460,8 +460,8 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             printf("error: createEthHeader at L2hederSize\n");
             return (-1);
         }
-        payloadBuf = sizeof(packet) - L2headerSize;»»---»---//最大packetからL2header引いた値
-            address = packet + L2headerSize;»---»---»---»---»---//address; ヘッダの終わりのアドレスを指す
+        payloadBuf = sizeof(packet) - L2headerSize;     //最大packetからL2header引いた値
+            address = packet + L2headerSize;            //address; ヘッダの終わりのアドレスを指す
 
     }else if(L2flag == ETH_VLANflag){
         /* +-------+-------+----------+----+----------------------------------+
@@ -523,7 +523,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 
     /*** laypoad ***/
     ssize_t payloadSize = createPayload(address, payloadBuf, pValue,(*count)++);
-    printf("[payloadSize] at sendPackets(); %d\n", payloadSize);
+    //printf("payloadSize at sendPackets(); %d\n", payloadSize);
     if(payloadSize == -1){
         printf("error: payloadSize is over than payloadBuf\n");
         return (-1);
@@ -596,13 +596,12 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
     int L4flag = 0;
     int L2flag = 0;
     int vValue = 0;             //vlanIDを指定
-    int srcPortNum = 0;
+    int srcPortNum = 0;         //なぜか変数未使用のwarningでる(?)
     int sValue = 0;             //送信元port number
-    int destPortNum = 0;
+    int destPortNum = 0;        //なぜか変数未使用のwarningでる(?)
     int dValue = 0;             //宛先　port number
-    int payload = 0;            //これだけなぜか変数未使用のwarningでる(?)
+    int payload = 0;            //なぜか変数未使用のwarningでる(?)
     int pValue = 0;
-
 
     /* 実行例；./fileName -v 173 -u -s 49152 -d 49153 -p 100 
      * -> vlanID 173 で送信元port 49152から宛先port 49153 へpayload 100byteのUDP packetを送信*/
@@ -682,6 +681,6 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
         printf("sendTerms error\n");
         return (-1);
     }
-
+    printf("なんで？");
     return (0);
 }
