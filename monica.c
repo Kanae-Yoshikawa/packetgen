@@ -26,20 +26,17 @@
 #define Period      1
 #define IPv4        YES	        //IPv6を追加したくなる時に備えてマクロで追加しておいた
 
-/* (ethernet frame type)    /usr/include/net/ethernet.h  */
-#define ETH_P_Exp   0x0800          // Ethernet type = IP
+#define ETH_P_Exp   0x0800          // Ethernet frame type = IP  (/usr/include/net/ethernet.)
 
 #define InitialReplyDelay   40      // これ何???
 #define MaxCommCount        9999    // send 回数
 #define IFNAME              "ethX"  // or "gretapX"
 //#define IFNAME            "p5p1"  // abileneのinterface名に変更した
-//extern void _exit(int32_t);       //プロトタイプ宣言．外部関数参照
 
 #define UDPflag     1               // 値に特に意味は無い
 #define TCPflag     2               // 値に特に意味は無い
-
-#define ETHflag         1           // 値に特に意味は無い
-#define ETH_VLANflag    2           // 値に特に意味は無い
+#define ETHflag     3               // 値に特に意味は無い
+#define ETH_VLANflag 4              // 値に特に意味は無い
 
 
 
@@ -105,7 +102,6 @@ struct _TCP {
     uint32_t dstIP;
     //uint32_t option;
 
-
     /***  TCP header ***/
     uint16_t srcPort;
     uint16_t dstPort;
@@ -122,8 +118,6 @@ struct _TCP {
 
 } __attribute__((packed));
 typedef struct _TCP TCP;
-
-
 
 
 
@@ -259,6 +253,8 @@ ssize_t createEthVlanHeader(unsigned char *ETH_VLANbuf, ssize_t ETH_VLANbufsize,
 
     return L2headerSize;
 }
+
+
 /*********************
  * Create UDP header *
  *********************/
@@ -316,10 +312,6 @@ ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValu
 }
 
 
-
-
-
-
 /*********************
  * Create TCP header *
  *********************/
@@ -359,19 +351,18 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
 #endif
 
     /*** TCP header ***/
-    packet->srcPort        = htons(sValue);           //source port
-    packet->dstPort        = htons(dValue);           //destination port
+    packet->srcPort        = htons(sValue);          //source port
+    packet->dstPort        = htons(dValue);          //destination port
 
     /* sequence number計算 */
     //seq #＝seq #の初期値＋相手に送ったTCPデータのbyte数
     //初期値はランダム設定-> 101とする
     tcpSeqNum = 101 + pValue;
-    packet->seqNumber      = htonl(tcpSeqNum);       //sequence number  
+    packet->seqNumber      = htonl(tcpSeqNum);       //sequence number
 
-
-    packet->ackNumber      = htonl(0x00000002);       //相手から受信したシーケンス番号+ data size
-    //packet->offsetReservCtl= htons(0x5008);           //data offset, reserved, ctl flag
-    packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
+    packet->ackNumber      = htonl(0x00000002);      //相手から受信したシーケンス番号+ data size
+    //packet->offsetReservCtl= htons(0x5008);        //data offset, reserved, ctl flag
+    packet->offsetReservCtl= htons(0x8011);          //コピペのもの．なぜheader size = 8 ?
     /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
      * resrved(6)      全bit 0. 将来の拡張のため                              =000000
      * ctl flag(6)     URG/ACK/PSH/RST/SYN(connection要求)/FIN                =001000
@@ -399,8 +390,7 @@ ssize_t createPayload(unsigned char * buf, ssize_t payloadBuf, int32_t pValue, i
     payloadSize = pValue;
 
     return payloadSize;  
-}	
-
+}
 
 
 /************************
@@ -449,7 +439,6 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
     sll.sll_ifindex = ifindex;
 
 
-
     /*** L2 header ***/
     if(L2flag == ETHflag){
         /* +-------+-------+----+---------------------------------------------+
@@ -461,7 +450,7 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             return (-1);
         }
         payloadBuf = sizeof(packet) - L2headerSize;     //最大packetからL2header引いた値
-            address = packet + L2headerSize;            //address; ヘッダの終わりのアドレスを指す
+        address = packet + L2headerSize;            //address; ヘッダの終わりのアドレスを指す
 
     }else if(L2flag == ETH_VLANflag){
         /* +-------+-------+----------+----+----------------------------------+
@@ -474,8 +463,6 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         }
         payloadBuf = sizeof(packet) - L2headerSize;         //最大packetからL2header引いた値
         address = packet + L2headerSize;                    //address; ヘッダの終わりのアドレスを指す
-
-
     }
 
     /*** L3,L4 header ***/
@@ -520,7 +507,6 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         return (-1);
     };
 
-
     /*** laypoad ***/
     ssize_t payloadSize = createPayload(address, payloadBuf, pValue,(*count)++);
     //printf("payloadSize at sendPackets(); %d\n", payloadSize);
@@ -530,7 +516,6 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
     }
 
     packetSize = L2headerSize + L3_L4headerSize + payloadSize;
-
     ssize_t sizeout = sendto(fd, packet, packetSize, 0,(struct sockaddr *)&sll, sizeof(sll));
 
     /*printPacket((Header*)packet, packetSize, "Sent:    "); */
@@ -544,7 +529,6 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
     }
     return (0);
 }
-
 
 
 /*********************************
@@ -579,7 +563,6 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
 }
 
 
-
 /****************
  * Main program *
  ****************/
@@ -590,7 +573,6 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
     int32_t destTermNum = 1;    //MAC2{}の何要素目か
     int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
     int ret = 0;                //sendTerms()の返り値処理
-
     /* add getopt() で使うもの */
     int opt;
     int L4flag = 0;
@@ -641,14 +623,12 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
                 exit(EXIT_FAILURE);
         }
     }
-    // ここの処理よくわからん
     //if (optind >= argc) {
     if (optind > argc) {
         printf("optind;%d, argc%d\n", optind,argc);
         fprintf(stderr, "Expected argument after options\n");
         exit(EXIT_FAILURE);
     }
-
     unsigned char *buf = NULL;
     buf = malloc(sizeof(unsigned char)*pValue);
     if(buf == NULL){
@@ -666,7 +646,6 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
     printf("p%dp1 terminal#=%d VLAN:%d srcMAC:%04x%04x destMAC:%04x%04x\n",
             ifnum, myTermNum, vValue,
             (int32_t)SrcMAC1, (int32_t)SrcMAC2, (int32_t)DestMAC1, (int32_t)DestMAC2);
-
     //socket生成
     int32_t fd = open_socket(ifnum, &ifindex);
 
