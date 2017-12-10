@@ -25,7 +25,7 @@
 #define DEBUG       1
 #define MAX_PACKET_SIZE 1518    // MTU = 1518byte
 #define Period      1
-#define IPv4        YES         //IPv6を追加したくなる時に備えてマクロで追加しておいた
+#define IPv4        YES
 
 #define ETH_P_Exp   0x0800          // Ethernet frame type = IP  (/usr/include/net/ethernet.)
 
@@ -384,7 +384,7 @@ ssize_t createPayload(unsigned char * buf, ssize_t payloadBuf, int32_t pValue, i
     ssize_t payloadSize = 0;
 
     if(pValue > payloadBuf){
-        printf("error  pValue is over than payloadBuf\npValue %d, payloadBuf %d \n", pValue, payloadBuf);
+        printf("error  pValue is over than payloadBuf\npValue %d, payloadBuf %zd \n", pValue, payloadBuf);
         return (-1);
     }
     payloadSize = pValue;
