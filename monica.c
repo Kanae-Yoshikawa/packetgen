@@ -1,10 +1,11 @@
+
+#include <stdio.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <net/if.h>             // struct ifreq
 #include <sys/ioctl.h>          // ioctl()
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <stdio.h>
 #include <elf.h>
 #include <string.h>
 #include <fcntl.h>
@@ -24,7 +25,7 @@
 #define DEBUG       1
 #define MAX_PACKET_SIZE 1518    // MTU = 1518byte
 #define Period      1
-#define IPv4        YES	        //IPv6を追加したくなる時に備えてマクロで追加しておいた
+#define IPv4        YES         //IPv6を追加したくなる時に備えてマクロで追加しておいた
 
 #define ETH_P_Exp   0x0800          // Ethernet frame type = IP  (/usr/include/net/ethernet.)
 
@@ -218,7 +219,6 @@ ssize_t createEthHeader(unsigned char *ETHbuf, ssize_t ETHbufsize, uint16_t dest
     if(L2headerSize > ETHbufsize){
         return(-1);
     }
-
     packet->destMAC1 = htons(destMAC1);
     packet->destMAC2 = htonl(destMAC2);
     packet->srcMAC1 = htons(srcMAC1);
@@ -243,7 +243,6 @@ ssize_t createEthVlanHeader(unsigned char *ETH_VLANbuf, ssize_t ETH_VLANbufsize,
     if(L2headerSize > ETH_VLANbufsize){
         return(-1);
     }
-
     packet->destMAC1 = htons(destMAC1);
     packet->destMAC2 = htonl(destMAC2);
     packet->srcMAC1 = htons(srcMAC1);
@@ -261,8 +260,7 @@ ssize_t createEthVlanHeader(unsigned char *ETH_VLANbuf, ssize_t ETH_VLANbufsize,
 // 呼び出し；L3_L4headerSize = createUdpHeader(address, sizeof(payloadBuf), sValue, dValue, pValue);
 ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValue, int32_t dValue, int32_t pValue)
 {
-    //Packet *packet = (Packet *)buf;     //(Packet *)にキャスト
-    UDP *packet = (UDP *)UDPbuf;             //(UDP *)にキャスト
+    UDP *packet = (UDP *)UDPbuf;                    //(UDP *)にキャスト
 
     ssize_t L3_L4headerSize = 0;
     int32_t calcuLen = 0;
@@ -272,8 +270,9 @@ ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValu
      * もしerrorする場合は　以下のerror回避sampleを参考にすること
      * headerSize += sizeof(packet->Header.destMAC1);
      * でも回避sampleの方式にするとbufsizeのif文が不成立になるから要編集 */
-printf("L3_L4headerSize %ld\n", L3_L4headerSize);
-printf("UDPbufsize%d\n", UDPbufsize);
+
+    //printf("L3_L4headerSize %ld\n", L3_L4headerSize);
+    //printf("UDPbufsize%zd\n", UDPbufsize);
 
     if(L3_L4headerSize > UDPbufsize){
         return (-1);
@@ -287,27 +286,27 @@ printf("UDPbufsize%d\n", UDPbufsize);
     /* totalLen計算 */
     /* pValue + UDP header(8byte) + IP header(option 無->20byte) */
     calcuLen = pValue + 8 + 20;
-    packet->totalLen  = htons(calcuLen);   //error;IPv4 total lentgh exceeds packet length 32byte
+    packet->totalLen  = htons(calcuLen);    //error;IPv4 total lentgh exceeds packet length 32byte
 
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x11;                 //UDPなら11，TCPなら06
+    packet->protocol  = 0x11;               //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
 #endif
 
     /*** UDP header ***/
-    packet->srcPort     = htons(sValue);      //source port
-    packet->dstPort     = htons(dValue);      //destination port
+    packet->srcPort     = htons(sValue);    //source port
+    packet->dstPort     = htons(dValue);    //destination port
 
     /* UDP len計算 */
     /* pValue + UDP header(8byte) */
     calcuLen = pValue + 8;
-    packet->len         = htons(calcuLen);      //UDP len　//pValue + UDP header
+    packet->len         = htons(calcuLen);  //UDP len = pValue + UDP header
 
-    packet->UdpChecksum = htons(0x0000);      //UDP checksum あとで直す！！！！！
+    packet->UdpChecksum = htons(0x0000);    //UDP checksum あとで直す！！！！！
 
     //printf("L3_L4headerSize at createUdpHeader %d \n", L3_L4headerSize);
     return L3_L4headerSize;
@@ -320,7 +319,6 @@ printf("UDPbufsize%d\n", UDPbufsize);
 // 呼び出し；L3_L4headerSize = createUdpHeader(address, sizeof(payloadBuf), sValue, dValue, pValue);
 ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValue, int32_t dValue, int32_t pValue)
 {
-    //Packet *packet = (Packet *)buf;   //(Packet *)にキャスト
     TCP *packet = (TCP *)TCPbuf;           //(TCP *)にキャスト
 
     ssize_t L3_L4headerSize = 0;
@@ -341,37 +339,37 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     /* totalLen計算 */
     //pValue + TCP header(optrion無->20byte) + IP header(option 無->20byte)
     calcuLen = pValue + 20 + 20;
-    packet->totalLen  = htons(calcuLen);   //error;IPv4 total lentgh exceeds packet length 32byte
+    packet->totalLen  = htons(calcuLen);    //error;IPv4 total lentgh exceeds packet length 32byte
 
     packet->Identify  = htons(0xddf2);
     packet->flag      = htons(0x4000);
     packet->TTL       = 0x40;
-    packet->protocol  = 0x06;            //UDPなら11，TCPなら06
+    packet->protocol  = 0x06;               //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
 #endif
 
     /*** TCP header ***/
-    packet->srcPort        = htons(sValue);          //source port
-    packet->dstPort        = htons(dValue);          //destination port
+    packet->srcPort        = htons(sValue);     //source port
+    packet->dstPort        = htons(dValue);     //destination port
 
     /* sequence number計算 */
     //seq #＝seq #の初期値＋相手に送ったTCPデータのbyte数
     //初期値はランダム設定-> 101とする
     tcpSeqNum = 101 + pValue;
-    packet->seqNumber      = htonl(tcpSeqNum);       //sequence number
+    packet->seqNumber      = htonl(tcpSeqNum);  //sequence number
 
-    packet->ackNumber      = htonl(0x00000002);      //相手から受信したシーケンス番号+ data size
-    //packet->offsetReservCtl= htons(0x5008);        //data offset, reserved, ctl flag
-    packet->offsetReservCtl= htons(0x8011);          //コピペのもの．なぜheader size = 8 ?
+    packet->ackNumber      = htonl(0x00000002);     //相手から受信したシーケンス番号+ data size
+    //packet->offsetReservCtl= htons(0x5008);       //data offset, reserved, ctl flag
+    packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
     /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
      * resrved(6)      全bit 0. 将来の拡張のため                              =000000
      * ctl flag(6)     URG/ACK/PSH/RST/SYN(connection要求)/FIN                =001000
      * 0101000000001000 = 0x5008*/
-    packet->windowSize     = htons(0x002d);           //受信側が一度に受信可能なdata量を送信側に通知
-    packet->TcpChecksum    = htons(0x0000);           //checksum
-    packet->urgentPointer  = htons(0x0000);           //ctl flagのURGの値が「1」である場合にのみ使用
+    packet->windowSize     = htons(0x002d);         //受信側が一度に受信可能なdata量を送信側に通知
+    packet->TcpChecksum    = htons(0x0000);         //checksum
+    packet->urgentPointer  = htons(0x0000);         //ctl flagのURGの値が「1」である場合にのみ使用
     //packet-> ? = hton?(?);     //option
 
     return L3_L4headerSize;
@@ -386,7 +384,7 @@ ssize_t createPayload(unsigned char * buf, ssize_t payloadBuf, int32_t pValue, i
     ssize_t payloadSize = 0;
 
     if(pValue > payloadBuf){
-        //printf("error  pValue is over than payloadBuf\npValue %d, payloadBuf %d \n", pValue, payloadBuf);
+        printf("error  pValue is over than payloadBuf\npValue %d, payloadBuf %d \n", pValue, payloadBuf);
         return (-1);
     }
     payloadSize = pValue;
@@ -425,14 +423,14 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         uint16_t DestMAC1, uint32_t DestMAC2, int32_t L2flag, uint32_t vlanTag, uint16_t type,
         int32_t L4flag, int32_t sValue, int32_t dValue, int32_t pValue, int32_t *count)
 {
-    unsigned char packet[MAX_PACKET_SIZE];	//packetを送ることができる最大サイズ
+    unsigned char packet[MAX_PACKET_SIZE];  //送信可能最大frameサイズ
     memset(packet,0, MAX_PACKET_SIZE);
-    unsigned char *address = NULL;   
 
-    ssize_t packetSize = 0;                 //実際に送るpacketのサイズ
-    ssize_t L2headerSize = 0;               // Ether headerとVlan tag
-    ssize_t L3_L4headerSize = 0;            // IP header と UDP/TCP header
-    ssize_t payloadBuf = 0;                 //packet[]からL2_L3_L4headerを引いたもの
+    ssize_t packetSize = 0;                 //実際に送るframeのサイズ
+    ssize_t L2headerSize = 0;               //Ether headerとVlan tag
+    ssize_t L3_L4headerSize = 0;            //IP header と UDP/TCP header
+    ssize_t payloadBuf = 0;                 //packet[]からheader部分を引いたもの
+    unsigned char *address = NULL;          //packet[0]から各headerを詰めた時のpayload先頭アドレス
 
     struct sockaddr_ll sll;
     memset(&sll, 0, sizeof(sll));
@@ -446,13 +444,15 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
         /* +-------+-------+----+---------------------------------------------+
            | dMAC  | sMAC  |Type|                   Payload                   |
            +-------+-------+----+---------------------------------------------+ */
+
+        // [memo] sizeof(packet) = sizeof(packet[0])
         L2headerSize = createEthHeader(packet, sizeof(packet), DestMAC1, DestMAC2, SrcMAC1, SrcMAC2, type);
         if(L2headerSize == -1){
             printf("error: createEthHeader at L2hederSize\n");
             return (-1);
         }
-        payloadBuf = sizeof(packet) - L2headerSize;     //最大packetからL2header引いた値
-        address = packet + L2headerSize;            //address; ヘッダの終わりのアドレスを指す
+        payloadBuf = sizeof(packet) - L2headerSize;         //最大freameからL2headerSizeを引いた値
+        address = packet + L2headerSize;
 
     }else if(L2flag == ETH_VLANflag){
         /* +-------+-------+----------+----+----------------------------------+
@@ -463,11 +463,14 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
             printf("error: createEthHeader at L2hederSize\n");
             return (-1);
         }
-        payloadBuf = sizeof(packet) - L2headerSize;         //最大packetからL2header引いた値
-    printf("payloadBuf%d\n", payloadBuf);
-    printf("L2headerSize%d\n", L2headerSize);
-        address = packet + L2headerSize;                    //address; ヘッダの終わりのアドレスを指す
-    }
+        payloadBuf = sizeof(packet) - L2headerSize;         //最大freameからL2headerSizeを引いた値
+        //printf("payloadBuf%zd\n", payloadBuf);
+        //printf("L2headerSize%zd\n", L2headerSize);
+        address = packet + L2headerSize;
+    }else{
+        printf("error: please enter [e] or [v] as options\n");
+        return (-1);
+    };
 
     /*** L3,L4 header ***/
     if(L4flag == UDPflag){
@@ -475,16 +478,13 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
            | dMAC  | sMAC  |(8100 VLAN)|Type| IPv4 | [UDP] |     Payload      |
            +-------+-------+-----------+----+------+-------+------------------+*/
 
-        // [memo] sizeof(packet) = sizeof(packet[0])
         L3_L4headerSize = createUdpHeader(address, (int)payloadBuf, sValue, dValue, pValue);
-        //L3_L4headerSize = createUdpHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
-        //SrcMAC1, SrcMAC2, vlanTag, type, sValue, dValue, pValue);
         if(L3_L4headerSize == -1){
             printf("error: createUdpHeader at L3_L4hederSize\n");
             return (-1);
         }
         //上のL2headerSize で既に payloadBuf = sizeof(packet) - L2headerSize; してるから
-        payloadBuf = payloadBuf - L3_L4headerSize;	
+        payloadBuf = payloadBuf - L3_L4headerSize;  
         //上のL2headerSize で既に address = packet + L2headerSize; してるから
         address = address + L3_L4headerSize;
 
@@ -493,21 +493,19 @@ int sendPackets(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
            | dMAC  | sMAC  |(8100 VLAN)|Type| IPv4 |   [TCP]  |    Payload    |
            +-------+-------+-----------+----+------+----------+---------------+ */
 
-        // [memo] sizeof(packet) = sizeof(packet[0])
-        L3_L4headerSize = createUdpHeader(address, sizeof(payloadBuf), sValue, dValue, pValue);
-        //		L3_L4headerSize = createTcpHeader(packet, sizeof(packet), DestMAC1, DestMAC2,
-        //				SrcMAC1, SrcMAC2, vlanTag, type, sValue, dValue, pValue);
+        L3_L4headerSize = createTcpHeader(address, (int)payloadBuf, sValue, dValue, pValue);
+        //L3_L4headerSize = createTcpHeader(address, sizeof(payloadBuf), sValue, dValue, pValue);
         if(L3_L4headerSize == -1){
             printf("error: createTCPHeader at L3_L4hederSize\n");
             return (-1);
         }
         //上のL2headerSize で既に payloadBuf = sizeof(packet) - L2headerSize; してるから
-        payloadBuf = payloadBuf - L3_L4headerSize;	
+        payloadBuf = payloadBuf - L3_L4headerSize;  
         //上のL2headerSize で既に address = packet + L2headerSize; してるから
         address = address + L3_L4headerSize;
 
     }else{
-        printf("error: please pless [u] or [t] as options\n");
+        printf("error: please enter [u] or [t] as options\n");
         return (-1);
     };
 
