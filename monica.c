@@ -30,7 +30,7 @@
 #define ETH_P_Exp   0x0800          // Ethernet frame type = IP  (/usr/include/net/ethernet.)
 
 #define InitialReplyDelay   40      // これ何???
-#define MaxCommCount        9999    // send 回数
+#define MaxCommCount        30    // send+1 回数   for(; sendCount < MaxCommCount ;)
 #define IFNAME              "ethX"  // or "gretapX"
 //#define IFNAME            "p5p1"  // abileneのinterface名に変更した
 
@@ -106,8 +106,8 @@ struct _TCP {
     /***  TCP header ***/
     uint16_t srcPort;
     uint16_t dstPort;
-    uint16_t seqNumber;
-    uint16_t ackNumber;
+    uint32_t seqNumber;  ///!!!
+    uint32_t ackNumber;
     uint16_t offsetReservCtl;
     uint16_t windowSize;
     uint16_t TcpChecksum;
@@ -362,8 +362,16 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
 
     packet->ackNumber      = htonl(0x00000002);     //相手から受信したシーケンス番号+ data size
     //packet->offsetReservCtl= htons(0x5008);       //data offset, reserved, ctl flag
-    packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
-    /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
+   //  ここ足りない
+       packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
+  /*
+offsetReservCtl = 20;
+sample ; offsetReservCtl = offsetReservCtl << 12;
+flagたてたものを足す
+
+   */
+
+       /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
      * resrved(6)      全bit 0. 将来の拡張のため                              =000000
      * ctl flag(6)     URG/ACK/PSH/RST/SYN(connection要求)/FIN                =001000
      * 0101000000001000 = 0x5008*/
