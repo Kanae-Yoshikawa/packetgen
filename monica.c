@@ -106,7 +106,7 @@ struct _TCP {
     /***  TCP header ***/
     uint16_t srcPort;
     uint16_t dstPort;
-    uint32_t seqNumber;  ///!!!
+    uint32_t seqNumber;
     uint32_t ackNumber;
     uint16_t offsetReservCtl;
     uint16_t windowSize;
@@ -324,6 +324,7 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     ssize_t L3_L4headerSize = 0;
     int32_t calcuLen = 0;
     int32_t tcpSeqNum = 0;
+    int32_t tcpAckNum = 0;
 
     L3_L4headerSize = sizeof(TCP) - sizeof(unsigned char *);
     if(L3_L4headerSize > TCPbufsize){
@@ -356,21 +357,27 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
 
     /* sequence number計算 */
     //seq #＝seq #の初期値＋相手に送ったTCPデータのbyte数
-    //初期値はランダム設定-> 101とする
-    tcpSeqNum = 101 + pValue;
+    //初期値はランダム設定-> 10000とする
+    tcpSeqNum = 10000 + pValue;
     packet->seqNumber      = htonl(tcpSeqNum);  //sequence number
 
-    packet->ackNumber      = htonl(0x00000002);     //相手から受信したシーケンス番号+ data size
+    /* ackNumberの計算 */
+    //相手から受信したシーケンス番号+ data size
+    //ACKフラグが3way hand shakeでないけどOFFだから適当
+    tcpAckNum = 
+    packet->ackNumber      = htonl(0x00000002);
+    
     //packet->offsetReservCtl= htons(0x5008);       //data offset, reserved, ctl flag
    //  ここ足りない
        packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
-  /*
+
+       
+       /*
 offsetReservCtl = 20;
 sample ; offsetReservCtl = offsetReservCtl << 12;
 flagたてたものを足す
 
    */
-
        /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
      * resrved(6)      全bit 0. 将来の拡張のため                              =000000
      * ctl flag(6)     URG/ACK/PSH/RST/SYN(connection要求)/FIN                =001000
