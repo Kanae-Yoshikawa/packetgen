@@ -124,6 +124,7 @@ typedef struct _TCP TCP;
 
 /**************************************************************************
  * MAC addressを指定. MAC1とMAC2で前後を分離. 16進数「0x」付け忘れ注意    *
+      補足）2進数は末尾に「b」
  * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]MAC2[0]*
  **************************************************************************/
 #define NTerminals  4       // 指定できるMAC address数
@@ -324,7 +325,8 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     ssize_t L3_L4headerSize = 0;
     int32_t calcuLen = 0;
     int32_t tcpSeqNum = 0;
-    int32_t tcpAckNum = 0;
+    //int32_t tcpAckNum = 0;
+    int16_t tcpORCcal = 0;
 
     L3_L4headerSize = sizeof(TCP) - sizeof(unsigned char *);
     if(L3_L4headerSize > TCPbufsize){
@@ -363,28 +365,38 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
 
     /* ackNumberの計算 */
     //相手から受信したシーケンス番号+ data size
-    //ACKフラグが3way hand shakeでないけどOFFだから適当
-    tcpAckNum = 
-    packet->ackNumber      = htonl(0x00000002);
+    //ACKフラグがOFFだから適当でよい？？
+    //tcpAckNum = tcpSeqNum - 1;                  //式要確認
+    packet->ackNumber      = htonl(0x0000);
+
+    /* offsetReservCtlの計算 */
+    //packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
     
-    //packet->offsetReservCtl= htons(0x5008);       //data offset, reserved, ctl flag
-   //  ここ足りない
-       packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
+    /*  data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
+        resrved(6)      全bit 0 (将来の拡張のため) = 000000
+        ctl flag(6)     URG(緊急)[0]/ACK[1]/PSH[1]/RST(中断)[0]/SYN(接続要求)[0]/FIN = 011000
+                    SYN[1]にすると3way hand shake開始しちゃうから0にした
+                    ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON
+        0101000000011000 = 0x5018
+    //packet->offsetReservCtl= htons(0x5018);       //data offset, reserved, ctl flag
 
-       
-       /*
-offsetReservCtl = 20;
-sample ; offsetReservCtl = offsetReservCtl << 12;
-flagたてたものを足す
 
-   */
-       /* data offset(4)  TCPヘッダの長さ※ 4byte単位       20/4byte(option無)= 5 =0101
-     * resrved(6)      全bit 0. 将来の拡張のため                              =000000
-     * ctl flag(6)     URG/ACK/PSH/RST/SYN(connection要求)/FIN                =001000
-     * 0101000000001000 = 0x5008*/
+/* bit shiftしなさい kaneko-san
+    offsetReservCtl = 20;
+    sample ; offsetReservCtl = offsetReservCtl << 12;
+    で，flagたてたものを足す*/
+tcpORCcal = 5;                  //data offset
+    tcpORCcal = tcpORCcal << 12;
+tcpORCcal = tcpORCcal + 0;      //reserved
+    tcpORCcal = tcpORCcal << 6
+tcpORCcal = tcpORCcal + 011000; //ctl flag
+
+    packet->offsetReservCtl= htons(tcpORCcal)
+
+
     packet->windowSize     = htons(0x002d);         //受信側が一度に受信可能なdata量を送信側に通知
     packet->TcpChecksum    = htons(0x0000);         //checksum
-    packet->urgentPointer  = htons(0x0000);         //ctl flagのURGの値が「1」である場合にのみ使用
+    packet->urgentPointer  = htons(0x0000);         //ctl flagのURG(緊急)の値が「1」である場合にのみ使用
     //packet-> ? = hton?(?);     //option
 
     return L3_L4headerSize;
