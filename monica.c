@@ -372,11 +372,11 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     /* offsetReservCtlの計算 */
     //packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
     
-      data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
+   /*   data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
         resrved(6)      全bit 0 (将来の拡張のため) = 000000
         ctl flag(6)     URG(緊急)[0]/ACK[1]/PSH[1]/RST(中断)[0]/SYN(接続要求)[0]/FIN = 011000
                     SYN[1]にすると3way hand shake開始しちゃうから0にした
-                    ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON
+                    ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON */
         0101000000011000 = 0x5018
     packet->offsetReservCtl= htons(0x5018);       //data offset, reserved, ctl flag
 
