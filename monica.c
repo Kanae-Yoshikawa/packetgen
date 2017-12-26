@@ -124,7 +124,7 @@ typedef struct _TCP TCP;
 
 /**************************************************************************
  * MAC addressを指定. MAC1とMAC2で前後を分離. 16進数「0x」付け忘れ注意    *
-      補足）2進数は末尾に「b」
+ 補足）2進数は末尾に「b」
  * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]MAC2[0]*
  **************************************************************************/
 #define NTerminals  5       // 指定できるMAC address数
@@ -371,28 +371,28 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
 
     /* offsetReservCtlの計算 */
     //packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
-    
-   /*   data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
-        resrved(6)      全bit 0 (将来の拡張のため) = 000000
-        ctl flag(6)     URG(緊急)[0]/ACK[1]/PSH[1]/RST(中断)[0]/SYN(接続要求)[0]/FIN = 011000
-                    SYN[1]にすると3way hand shake開始しちゃうから0にした
-                    ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON */
-        0101000000011000 = 0x5018
+
+    /*   data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
+         resrved(6)      全bit 0 (将来の拡張のため) = 000000
+         ctl flag(6)     URG(緊急)[0]/ACK[1]/PSH[1]/RST(中断)[0]/SYN(接続要求)[0]/FIN = 011000
+         SYN[1]にすると3way hand shake開始しちゃうから0にした
+         ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON
+         0101000000011000 = 0x5018 */
     packet->offsetReservCtl= htons(0x5018);       //data offset, reserved, ctl flag
 
 
-/* bit shiftしなさい kaneko-san
-    offsetReservCtl = 20;
-    sample ; offsetReservCtl = offsetReservCtl << 12;
-    で，flagたてたものを足す.
-tcpORCcal = 5;                  //data offset
-    tcpORCcal = tcpORCcal << 12;
-tcpORCcal = tcpORCcal + 0;      //reserved
-    tcpORCcal = tcpORCcal << 6;
-tcpORCcal = tcpORCcal + 011000; //ctl flag
+    /* bit shiftしなさい kaneko-san
+       offsetReservCtl = 20;
+       sample ; offsetReservCtl = offsetReservCtl << 12;
+       で，flagたてたものを足す.
+       tcpORCcal = 5;                  //data offset
+       tcpORCcal = tcpORCcal << 12;
+       tcpORCcal = tcpORCcal + 0;      //reserved
+       tcpORCcal = tcpORCcal << 6;
+       tcpORCcal = tcpORCcal + 011000; //ctl flag
 
-    packet->offsetReservCtl= htons(tcpORCcal);
-*/
+       packet->offsetReservCtl= htons(tcpORCcal);
+     */
 
     packet->windowSize     = htons(0xffff);         //受信側が一度に受信可能なdata量を送信側に通知.TCPなら最大65,535bytes
     packet->TcpChecksum    = htons(0x0000);         //checksum
@@ -599,11 +599,11 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
 {
 
     int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
-//以下4行，宣言時のコピー
-//#define NTerminals  5       // 指定できるMAC address数
-//MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1 }
-//uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060};
-//uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f};
+    //以下4行，宣言時のコピー
+    //#define NTerminals  5       // 指定できるMAC address数
+    //MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1 }
+    //uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060};
+    //uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f};
     int32_t myTermNum = 0;      //MAC[]の何要素目か
     int32_t destTermNum = 4;    //MAC[]の何要素目か
     int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
