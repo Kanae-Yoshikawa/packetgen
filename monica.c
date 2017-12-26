@@ -326,7 +326,7 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     int32_t calcuLen = 0;
     int32_t tcpSeqNum = 0;
     //int32_t tcpAckNum = 0;
-    int16_t tcpORCcal = 0;
+    //int16_t tcpORCcal = 0;
 
     L3_L4headerSize = sizeof(TCP) - sizeof(unsigned char *);
     if(L3_L4headerSize > TCPbufsize){
@@ -367,24 +367,24 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     //相手から受信したシーケンス番号+ data size
     //ACKフラグがOFFだから適当でよい？？
     //tcpAckNum = tcpSeqNum - 1;                  //式要確認
-    packet->ackNumber      = htonl(0x0000);
+    packet->ackNumber      = htonl(tcpSeqNum-1);
 
     /* offsetReservCtlの計算 */
     //packet->offsetReservCtl= htons(0x8011);         //コピペのもの．なぜheader size = 8 ?
     
-    /*  data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
+      data offset(4)  TCPヘッダの長さ※ 4byte単位 -> 20/4byte(option無) = 5 = 0101
         resrved(6)      全bit 0 (将来の拡張のため) = 000000
         ctl flag(6)     URG(緊急)[0]/ACK[1]/PSH[1]/RST(中断)[0]/SYN(接続要求)[0]/FIN = 011000
                     SYN[1]にすると3way hand shake開始しちゃうから0にした
                     ACK->3WHSの最初を除き他の全てのTCPパケットはACKのフラグがON
         0101000000011000 = 0x5018
-    //packet->offsetReservCtl= htons(0x5018);       //data offset, reserved, ctl flag
+    packet->offsetReservCtl= htons(0x5018);       //data offset, reserved, ctl flag
 
 
 /* bit shiftしなさい kaneko-san
     offsetReservCtl = 20;
     sample ; offsetReservCtl = offsetReservCtl << 12;
-    で，flagたてたものを足す*/
+    で，flagたてたものを足す.
 tcpORCcal = 5;                  //data offset
     tcpORCcal = tcpORCcal << 12;
 tcpORCcal = tcpORCcal + 0;      //reserved
@@ -392,9 +392,9 @@ tcpORCcal = tcpORCcal + 0;      //reserved
 tcpORCcal = tcpORCcal + 011000; //ctl flag
 
     packet->offsetReservCtl= htons(tcpORCcal);
+*/
 
-
-    packet->windowSize     = htons(0x002d);         //受信側が一度に受信可能なdata量を送信側に通知
+    packet->windowSize     = htons(0xffff);         //受信側が一度に受信可能なdata量を送信側に通知.TCPなら最大65,535bytes
     packet->TcpChecksum    = htons(0x0000);         //checksum
     packet->urgentPointer  = htons(0x0000);         //ctl flagのURG(緊急)の値が「1」である場合にのみ使用
     //packet-> ? = hton?(?);     //option
