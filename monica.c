@@ -597,7 +597,13 @@ int sendTerms(int32_t fd, int32_t ifindex, uint16_t SrcMAC1, uint32_t SrcMAC2,
  ****************/
 int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
 {
+
     int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
+//以下4行，宣言時のコピー
+//#define NTerminals  5       // 指定できるMAC address数
+//MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1 }
+//uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060};
+//uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f};
     int32_t myTermNum = 0;      //MAC[]の何要素目か
     int32_t destTermNum = 4;    //MAC[]の何要素目か
     int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
