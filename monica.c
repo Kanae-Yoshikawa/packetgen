@@ -127,10 +127,10 @@ typedef struct _TCP TCP;
  補足）2進数は末尾に「b」
  * {src, dst, x, y}で借り置きした.  例）srcのMAC address -> MAC1[0]MAC2[0]*
  **************************************************************************/
-#define NTerminals  5       // 指定できるMAC address数
-//MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1 }
-uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060};
-uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f};
+#define NTerminals  10       // 指定できるMAC address数
+//MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1, MACdummy1, MACdummy2, MACdummy3, MACdummy4, MACdummy5 }
+uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa};
+uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f, 0x11111111, 0x22222222, 0x33333333, 0x44444444, 0x55555555};
 
 
 /*******************************************
@@ -294,6 +294,17 @@ ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValu
     packet->TTL       = 0x40;
     packet->protocol  = 0x11;               //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
+    /*
+       10.58.60.69(abilene5-p5p1)--> 0a3a3c45
+       10.58.60.72(abilene8-p5p1)--> 0a3a3c48
+       10.58.60.88(abilene8-p1p1)--> 0a3a3c58
+       10.58.60.87(abilene7-p1p1)--> 0a3a3c57
+       192.168.1.1(IP dummy1)    --> c0a80101
+       192.168.2.2(IP dummy2)    --> c0a80202
+       192.168.3.3(IP dummy3)    --> c0a80303
+       192.168.4.4(IP dummy4)    --> c0a80404
+       192.168.5.5(IP dummy5)    --> c0a80505
+     */
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
 #endif
@@ -349,6 +360,17 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
     packet->TTL       = 0x40;
     packet->protocol  = 0x06;               //UDPなら11，TCPなら06
     packet->IpChecksum= htons(0xcf79);
+    /*
+       10.58.60.69(abilene5-p5p1)--> 0a3a3c45
+       10.58.60.72(abilene8-p5p1)--> 0a3a3c48
+       10.58.60.88(abilene8-p1p1)--> 0a3a3c58
+       10.58.60.87(abilene7-p1p1)--> 0a3a3c57
+       192.168.1.1(IP dummy1)    --> c0a80101
+       192.168.2.2(IP dummy2)    --> c0a80202
+       192.168.3.3(IP dummy3)    --> c0a80303
+       192.168.4.4(IP dummy4)    --> c0a80404
+       192.168.5.5(IP dummy5)    --> c0a80505
+     */
     packet->srcIP     = htonl(0x0a3a3c45);
     packet->dstIP     = htonl(0x0a3a3c48);
 #endif
@@ -599,13 +621,14 @@ int32_t main(int32_t argc, char **argv)     // **argv = *argv[]
 {
 
     int32_t ifindex;            //物理ifや論理ifに関連付けられる一意の識別番号 
-    //以下4行，宣言時のコピー
-    //#define NTerminals  5       // 指定できるMAC address数
-    //MAC[]={abilene5-p5p1, abilene6-p5p1, abilne7-p1p1, abilene8-p1p1, abilene8-p5p1 }
-    //uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060};
-    //uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f};
-    int32_t myTermNum = 0;      //MAC[]の何要素目か
-    int32_t destTermNum = 4;    //MAC[]の何要素目か
+    /*   //以下4行，宣言時のコピー
+#define NTerminals  10       // 指定できるMAC address数
+    //MAC[]={ 0)abilene5-p5p1, 1)abilene6-p5p1, 2)abilne7-p1p1, 3)abilene8-p1p1, 4)abilene8-p5p1, 5)MACdummy1, 6)MACdummy2, 7)MACdummy3, 8)MACdummy4, 9)MACdummy5 }
+    uint16_t MAC1[NTerminals] = {0x0060, 0x0060, 0x0060, 0x0060, 0x0060, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa, 0xaaaa};
+    uint32_t MAC2[NTerminals] = {0xdd440bcb, 0xdd440c21, 0xdd440c3a, 0xdd440c2e, 0xdd440c2f, 0x11111111, 0x22222222, 0x33333333, 0x44444444, 0x55555555};
+     */
+    int32_t myTermNum = 9;      //MAC[]の何要素目か
+    int32_t destTermNum = 2;    //MAC[]の何要素目か
     int32_t ifnum = 5;          // 物理port番号??　  IFNAMEと何が違う??
     int ret = 0;                //sendTerms()の返り値処理
     /* add getopt() で使うもの */
