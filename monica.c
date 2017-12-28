@@ -307,10 +307,10 @@ ssize_t createUdpHeader(unsigned char *UDPbuf, ssize_t UDPbufsize, int32_t sValu
        192.168.3.3(IP dummy3)    --> c0a80303
        192.168.4.4(IP dummy4)    --> c0a80404
        192.168.5.5(IP dummy5)    --> c0a80505
-       192.168.1.6(IP dummy6)    --> c0a80106
-       192.168.1.7(IP dummy7)    --> c0a80107
-       192.168.1.8(IP dummy8)    --> c0a80108
-       192.168.1.9(IP dummy9)    --> c0a80109
+       192.168.1.6(IP dummy6)    --> c0a80606
+       192.168.1.7(IP dummy7)    --> c0a80707
+       192.168.1.8(IP dummy8)    --> c0a80808
+       192.168.1.9(IP dummy9)    --> c0a80909
      */
     packet->srcIP     = htonl(0xc0a80303);
     packet->dstIP     = htonl(0x0a3a3c57);
@@ -377,10 +377,10 @@ ssize_t createTcpHeader(unsigned char *TCPbuf, ssize_t TCPbufsize, int32_t sValu
        192.168.3.3(IP dummy3)    --> c0a80303
        192.168.4.4(IP dummy4)    --> c0a80404
        192.168.5.5(IP dummy5)    --> c0a80505
-       192.168.1.6(IP dummy6)    --> c0a80106
-       192.168.1.7(IP dummy7)    --> c0a80107
-       192.168.1.8(IP dummy8)    --> c0a80108
-       192.168.1.9(IP dummy9)    --> c0a80109
+       192.168.1.6(IP dummy6)    --> c0a80606
+       192.168.1.7(IP dummy7)    --> c0a80707
+       192.168.1.8(IP dummy8)    --> c0a80808
+       192.168.1.9(IP dummy9)    --> c0a80909
      */
     packet->srcIP     = htonl(0xc0a80303);
     packet->dstIP     = htonl(0x0a3a3c57);
